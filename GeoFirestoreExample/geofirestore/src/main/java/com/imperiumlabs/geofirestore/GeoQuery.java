@@ -14,6 +14,8 @@ import javax.annotation.Nullable;
 /**
  * A GeoQuery object can be used for geo queries in a given circle. The GeoQuery class is thread safe.
  */
+
+// TO COMPLETE; firestore event listener do not work
 public class GeoQuery {
     private static final int KILOMETER_TO_METER = 1000;
 
@@ -219,7 +221,7 @@ public class GeoQuery {
     // TO COMPLETE
     private void setupQueries() {
         Set<GeoHashQuery> oldQueries = (this.queries == null) ? new HashSet<GeoHashQuery>() : this.queries;
-        Set<GeoHashQuery> newQueries = GeoHashQuery.queriesAtLocation(center, radius);
+        Set<GeoHashQuery> newQueries = GeoHashQuery.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
         this.queries = newQueries;
         for (GeoHashQuery query: oldQueries) {
             if (!newQueries.contains(query)) {
@@ -231,11 +233,11 @@ public class GeoQuery {
         for (final GeoHashQuery query: newQueries) {
             if (!oldQueries.contains(query)) {
                 outstandingQueries.add(query);
-                DatabaseReference databaseReference = this.geoFire.getDatabaseReference();
-                Query firebaseQuery = databaseReference.orderByChild("g").startAt(query.getStartValue()).endAt(query.getEndValue());
-                firebaseQuery.addChildEventListener(this.childEventLister);
-                addValueToReadyListener(firebaseQuery, query);
-                firestoreQueries.put(query, firebaseQuery);
+                CollectionReference collectionReference = this.geoFirestore.getCollectionReference();
+                Query firestoreQuery = collectionReference.orderBy("g").startAt(query.getStartValue()).endAt(query.getEndValue());
+                firestoreQuery.addChildEventListener(this.childEventLister);
+                addValueToReadyListener(firestoreQuery, query);
+                firestoreQueries.put(query, firestoreQuery);
             }
         }
         for (Map.Entry<String, LocationInfo> info: this.locationInfos.entrySet()) {
