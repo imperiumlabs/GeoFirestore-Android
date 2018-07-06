@@ -1,5 +1,7 @@
 package com.imperiumlabs.geofirestore;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.*;
 import com.imperiumlabs.geofirestore.core.GeoHash;
 import com.imperiumlabs.geofirestore.core.GeoHashQuery;
@@ -14,12 +16,9 @@ import javax.annotation.Nullable;
 /**
  * A GeoQuery object can be used for geo queries in a given circle. The GeoQuery class is thread safe.
  */
-
-// TO COMPLETE; firestore event listener do not work
 public class GeoQuery {
     private static final int KILOMETER_TO_METER = 1000;
 
-    // COMPLETED
     private static class LocationInfo {
         final GeoPoint location;
         final boolean inGeoQuery;
@@ -34,49 +33,31 @@ public class GeoQuery {
         }
     }
 
-    // TO COMPLETE
-    private final ChildEventListener childEventLister = new ChildEventListener() {
-        @Override
-        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-            synchronized (GeoQuery.this) {
-                GeoQuery.this.childAdded(dataSnapshot);
-            }
-        }
+    private static class GeoHashQueryListener {
+        final ListenerRegistration childAddedListener;
+        final ListenerRegistration childRemovedListener;
+        final ListenerRegistration childChangedListener;
 
-        @Override
-        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-            synchronized (GeoQuery.this) {
-                GeoQuery.this.childChanged(dataSnapshot);
-            }
+        public GeoHashQueryListener(ListenerRegistration childAddedListener, ListenerRegistration childRemovedListener, ListenerRegistration childChangedListener){
+            this.childAddedListener = childAddedListener;
+            this.childRemovedListener = childRemovedListener;
+            this.childChangedListener = childChangedListener;
         }
+    }
 
-        @Override
-        public void onChildRemoved(DataSnapshot dataSnapshot) {
-            synchronized (GeoQuery.this) {
-                GeoQuery.this.childRemoved(dataSnapshot);
-            }
-        }
-
-        @Override
-        public synchronized void onChildMoved(DataSnapshot dataSnapshot, String s) {
-            // ignore, this should be handled by onChildChanged
-        }
-
-        @Override
-        public synchronized void onCancelled(DatabaseError databaseError) {
-            // ignore, our API does not support onCancelled
-        }
-    };
-
-    // COMPLETED
     private final GeoFirestore geoFirestore;
-    private final Set<GeoQueryDataEventListener> eventListeners = new HashSet<>();
-    private final Map<GeoHashQuery, Query> firestoreQueries = new HashMap<>();
-    private final Set<GeoHashQuery> outstandingQueries = new HashSet<>();
+
     private final Map<String, LocationInfo> locationInfos = new HashMap<>();
+    private Set<GeoHashQuery> queries;
+    private final Map<GeoHashQuery, Query> firestoreQueries = new HashMap<>();
+    private final Map<GeoHashQuery, GeoHashQueryListener> handles = new HashMap<>();
+    private final Set<GeoHashQuery> outstandingQueries = new HashSet<>();
+
+    private final Set<GeoQueryDataEventListener> eventListeners = new HashSet<>();
+
     private GeoPoint center;
     private double radius;
-    private Set<GeoHashQuery> queries;
+
 
     /**
      * Creates a new GeoQuery object centered at the given location and with the given radius.
@@ -85,20 +66,16 @@ public class GeoQuery {
      * @param radius The radius of the query, in kilometers. The maximum radius that is
      * supported is about 8587km. If a radius bigger than this is passed we'll cap it.
      */
-
-    // COMPLETED
     GeoQuery(GeoFirestore geoFirestore, GeoPoint center, double radius) {
         this.geoFirestore = geoFirestore;
         this.center = center;
         this.radius = radius * KILOMETER_TO_METER; // Convert from kilometers to meters.
     }
 
-    // COMPLETED
     private boolean locationIsInQuery(GeoPoint location) {
         return GeoUtils.distance(new GeoLocation(location.getLatitude(), location.getLongitude()), new GeoLocation(center.getLatitude(), center.getLongitude())) <= this.radius;
     }
 
-    // COMPLETED
     private void updateLocationInfo(final DocumentSnapshot documentSnapshot, final GeoPoint location) {
         String documentID = documentSnapshot.getId();
         LocationInfo oldInfo = this.locationInfos.get(documentID);
@@ -143,7 +120,6 @@ public class GeoQuery {
         this.locationInfos.put(documentID, newInfo);
     }
 
-    // COMPLETED
     private boolean geoHashQueriesContainGeoHash(GeoHash geoHash) {
         if (this.queries == null) {
             return false;
@@ -156,28 +132,30 @@ public class GeoQuery {
         return false;
     }
 
-    // TO COMPLETE
     private void reset() {
         for(Map.Entry<GeoHashQuery, Query> entry: this.firestoreQueries.entrySet()) {
-            entry.getValue().removeEventListener(this.childEventLister);
+            GeoHashQueryListener handle = handles.get(entry.getKey());
+            handle.childAddedListener.remove();
+            handle.childRemovedListener.remove();
+            handle.childChangedListener.remove();
         }
-        this.outstandingQueries.clear();
-        this.firestoreQueries.clear();
-        this.queries = null;
+
         this.locationInfos.clear();
+        this.queries = null;
+        this.firestoreQueries.clear();
+        this.handles.clear();
+        this.outstandingQueries.clear();
+
     }
 
-    // COMPLETED
     private boolean hasListeners() {
         return !this.eventListeners.isEmpty();
     }
 
-    // COMPLETED
     private boolean canFireReady() {
         return this.outstandingQueries.isEmpty();
     }
 
-    // COMPLETED
     private void checkAndFireReady() {
         if (canFireReady()) {
             for (final GeoQueryDataEventListener listener: this.eventListeners) {
@@ -192,40 +170,42 @@ public class GeoQuery {
     }
 
     // TO COMPLETE
-    private void addValueToReadyListener(final Query firebase, final GeoHashQuery query) {
-        firebase.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                synchronized (GeoQuery.this) {
-                    GeoQuery.this.outstandingQueries.remove(query);
-                    GeoQuery.this.checkAndFireReady();
-                }
-            }
+    private void addValueToReadyListener(final Query firestore, final GeoHashQuery query) {
 
+        firestore.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
-            public void onCancelled(final DatabaseError databaseError) {
-                synchronized (GeoQuery.this) {
-                    for (final GeoQueryDataEventListener listener : GeoQuery.this.eventListeners) {
-                        GeoQuery.this.geoFire.raiseEvent(new Runnable() {
-                            @Override
-                            public void run() {
-                                listener.onGeoQueryError(databaseError);
-                            }
-                        });
+            public void onComplete(final Task<QuerySnapshot> task) {
+                if (!task.isSuccessful()){
+                    synchronized (GeoQuery.this) {
+                        for (final GeoQueryDataEventListener listener : GeoQuery.this.eventListeners) {
+                            GeoQuery.this.geoFirestore.raiseEvent(new Runnable() {
+                                @Override
+                                public void run() {
+                                    listener.onGeoQueryError(task.getException());
+                                }
+                            });
+                        }
+                    }
+                }else{
+                    synchronized (GeoQuery.this) {
+                        GeoQuery.this.outstandingQueries.remove(query);
+                        GeoQuery.this.checkAndFireReady();
                     }
                 }
             }
         });
     }
 
-    // TO COMPLETE
     private void setupQueries() {
         Set<GeoHashQuery> oldQueries = (this.queries == null) ? new HashSet<GeoHashQuery>() : this.queries;
         Set<GeoHashQuery> newQueries = GeoHashQuery.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
         this.queries = newQueries;
         for (GeoHashQuery query: oldQueries) {
             if (!newQueries.contains(query)) {
-                firestoreQueries.get(query).removeEventListener(this.childEventLister);
+                GeoHashQueryListener handle = handles.get(firestoreQueries.get(query));
+                handle.childAddedListener.remove();
+                handle.childRemovedListener.remove();
+                handle.childChangedListener.remove();
                 firestoreQueries.remove(query);
                 outstandingQueries.remove(query);
             }
@@ -235,7 +215,48 @@ public class GeoQuery {
                 outstandingQueries.add(query);
                 CollectionReference collectionReference = this.geoFirestore.getCollectionReference();
                 Query firestoreQuery = collectionReference.orderBy("g").startAt(query.getStartValue()).endAt(query.getEndValue());
-                firestoreQuery.addChildEventListener(this.childEventLister);
+
+                ListenerRegistration childAddedListener = firestoreQuery.addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot value,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (value != null && e == null){
+                            for(final DocumentChange docChange: value.getDocumentChanges()){
+                                if (docChange.getType() == DocumentChange.Type.ADDED){
+                                    childAdded(docChange.getDocument());
+                                }
+                            }
+                        }
+                    }
+                });
+                ListenerRegistration childChangedListener = firestoreQuery.addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot value,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (value != null && e == null){
+                            for(final DocumentChange docChange: value.getDocumentChanges()){
+                                if (docChange.getType() == DocumentChange.Type.MODIFIED){
+                                    childChanged(docChange.getDocument());
+                                }
+                            }
+                        }
+                    }
+                });
+                ListenerRegistration childRemovedListener = firestoreQuery.addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot value,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (value != null && e == null){
+                            for(final DocumentChange docChange: value.getDocumentChanges()){
+                                if (docChange.getType() == DocumentChange.Type.REMOVED){
+                                    childRemoved(docChange.getDocument());
+                                }
+                            }
+                        }
+                    }
+                });
+                GeoHashQueryListener handle = new GeoHashQueryListener(childAddedListener, childRemovedListener, childChangedListener);
+                handles.put(query, handle);
                 addValueToReadyListener(firestoreQuery, query);
                 firestoreQueries.put(query, firestoreQuery);
             }
