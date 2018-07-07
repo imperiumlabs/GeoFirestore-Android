@@ -6,8 +6,6 @@ import java.lang.Exception;
 /**
  * GeoQuery notifies listeners with this interface about documents that entered, exited, or moved within the query.
  */
-
-// COMPLETED
 public interface GeoQueryDataEventListener {
 
     /**

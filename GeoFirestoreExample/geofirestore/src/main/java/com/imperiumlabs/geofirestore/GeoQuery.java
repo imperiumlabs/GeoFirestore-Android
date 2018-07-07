@@ -1,5 +1,7 @@
 package com.imperiumlabs.geofirestore;
 
+import android.support.annotation.NonNull;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.*;
@@ -79,6 +81,7 @@ public class GeoQuery {
     private void updateLocationInfo(final DocumentSnapshot documentSnapshot, final GeoPoint location) {
         String documentID = documentSnapshot.getId();
         LocationInfo oldInfo = this.locationInfos.get(documentID);
+
         boolean isNew = oldInfo == null;
         final boolean changedLocation = oldInfo != null && !oldInfo.location.equals(location);
         boolean wasInQuery = oldInfo != null && oldInfo.inGeoQuery;
@@ -145,7 +148,6 @@ public class GeoQuery {
         this.firestoreQueries.clear();
         this.handles.clear();
         this.outstandingQueries.clear();
-
     }
 
     private boolean hasListeners() {
@@ -169,13 +171,19 @@ public class GeoQuery {
         }
     }
 
-    // TO COMPLETE
     private void addValueToReadyListener(final Query firestore, final GeoHashQuery query) {
-
         firestore.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
-            public void onComplete(final Task<QuerySnapshot> task) {
-                if (!task.isSuccessful()){
+            public void onComplete(@NonNull final Task<QuerySnapshot> task) {
+                if (task.isSuccessful()){
+
+                    synchronized (GeoQuery.this) {
+                        GeoQuery.this.outstandingQueries.remove(query);
+                        GeoQuery.this.checkAndFireReady();
+                    }
+
+                }else{
+
                     synchronized (GeoQuery.this) {
                         for (final GeoQueryDataEventListener listener : GeoQuery.this.eventListeners) {
                             GeoQuery.this.geoFirestore.raiseEvent(new Runnable() {
@@ -186,11 +194,7 @@ public class GeoQuery {
                             });
                         }
                     }
-                }else{
-                    synchronized (GeoQuery.this) {
-                        GeoQuery.this.outstandingQueries.remove(query);
-                        GeoQuery.this.checkAndFireReady();
-                    }
+
                 }
             }
         });
@@ -214,14 +218,14 @@ public class GeoQuery {
             if (!oldQueries.contains(query)) {
                 outstandingQueries.add(query);
                 CollectionReference collectionReference = this.geoFirestore.getCollectionReference();
+
                 Query firestoreQuery = collectionReference.orderBy("g").startAt(query.getStartValue()).endAt(query.getEndValue());
 
                 ListenerRegistration childAddedListener = firestoreQuery.addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
-                    public void onEvent(@Nullable QuerySnapshot value,
-                                        @Nullable FirebaseFirestoreException e) {
-                        if (value != null && e == null){
-                            for(final DocumentChange docChange: value.getDocumentChanges()){
+                    public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
+                        if (queryDocumentSnapshots != null && e == null){
+                            for(final DocumentChange docChange: queryDocumentSnapshots.getDocumentChanges()){
                                 if (docChange.getType() == DocumentChange.Type.ADDED){
                                     childAdded(docChange.getDocument());
                                 }
@@ -229,25 +233,11 @@ public class GeoQuery {
                         }
                     }
                 });
-                ListenerRegistration childChangedListener = firestoreQuery.addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot value,
-                                        @Nullable FirebaseFirestoreException e) {
-                        if (value != null && e == null){
-                            for(final DocumentChange docChange: value.getDocumentChanges()){
-                                if (docChange.getType() == DocumentChange.Type.MODIFIED){
-                                    childChanged(docChange.getDocument());
-                                }
-                            }
-                        }
-                    }
-                });
                 ListenerRegistration childRemovedListener = firestoreQuery.addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
-                    public void onEvent(@Nullable QuerySnapshot value,
-                                        @Nullable FirebaseFirestoreException e) {
-                        if (value != null && e == null){
-                            for(final DocumentChange docChange: value.getDocumentChanges()){
+                    public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
+                        if (queryDocumentSnapshots != null && e == null){
+                            for(final DocumentChange docChange: queryDocumentSnapshots.getDocumentChanges()){
                                 if (docChange.getType() == DocumentChange.Type.REMOVED){
                                     childRemoved(docChange.getDocument());
                                 }
@@ -255,6 +245,19 @@ public class GeoQuery {
                         }
                     }
                 });
+                ListenerRegistration childChangedListener = firestoreQuery.addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException e) {
+                        if (queryDocumentSnapshots != null && e == null){
+                            for(final DocumentChange docChange: queryDocumentSnapshots.getDocumentChanges()){
+                                if (docChange.getType() == DocumentChange.Type.MODIFIED){
+                                    childChanged(docChange.getDocument());
+                                }
+                            }
+                        }
+                    }
+                });
+
                 GeoHashQueryListener handle = new GeoHashQueryListener(childAddedListener, childRemovedListener, childChangedListener);
                 handles.put(query, handle);
                 addValueToReadyListener(firestoreQuery, query);
@@ -280,7 +283,6 @@ public class GeoQuery {
         checkAndFireReady();
     }
 
-    // COMPLETED
     private void childAdded(DocumentSnapshot documentSnapshot) {
         GeoPoint location = GeoFirestore.getLocationValue(documentSnapshot);
         if (location != null) {
@@ -290,7 +292,6 @@ public class GeoQuery {
         }
     }
 
-    // COMPLETED
     private void childChanged(DocumentSnapshot documentSnapshot) {
         GeoPoint location = GeoFirestore.getLocationValue(documentSnapshot);
         if (location != null) {
@@ -300,29 +301,38 @@ public class GeoQuery {
         }
     }
 
-    // COMPLETED
     private void childRemoved(DocumentSnapshot documentSnapshot) {
         final String documentID = documentSnapshot.getId();
         final LocationInfo info = this.locationInfos.get(documentID);
         if (info != null) {
-            DocumentSnapshot docSnap = this.geoFirestore.getRefForDocumentID(documentID).get().getResult();
-            synchronized (GeoQuery.this) {
-                GeoPoint location = GeoFirestore.getLocationValue(docSnap);
-                GeoHash hash = (location != null) ? new GeoHash(new GeoLocation(location.getLatitude(), location.getLongitude())) : null;
-                if (hash == null || !GeoQuery.this.geoHashQueriesContainGeoHash(hash)) {
-                    final LocationInfo locInfo = locationInfos.remove(documentID);
-                    if (locInfo != null && locInfo.inGeoQuery) {
-                        for (final GeoQueryDataEventListener listener: GeoQuery.this.eventListeners) {
-                            GeoQuery.this.geoFirestore.raiseEvent(new Runnable() {
-                                @Override
-                                public void run() {
-                                    listener.onDocumentExited(locInfo.documentSnapshot);
+            this.geoFirestore.getRefForDocumentID(documentID).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                    if (task.isSuccessful()){
+
+                        synchronized (GeoQuery.this) {
+                            GeoPoint location = GeoFirestore.getLocationValue(task.getResult());
+                            GeoHash hash = (location != null) ? new GeoHash(new GeoLocation(location.getLatitude(), location.getLongitude())) : null;
+                            if (hash == null || !GeoQuery.this.geoHashQueriesContainGeoHash(hash)) {
+                                final LocationInfo locInfo = locationInfos.remove(documentID);
+                                if (locInfo != null && locInfo.inGeoQuery) {
+
+                                    for (final GeoQueryDataEventListener listener: GeoQuery.this.eventListeners) {
+                                        GeoQuery.this.geoFirestore.raiseEvent(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                listener.onDocumentExited(locInfo.documentSnapshot);
+                                            }
+                                        });
+                                    }
+
                                 }
-                            });
+                            }
                         }
+
                     }
                 }
-            }
+            });
         }
     }
 
@@ -333,8 +343,6 @@ public class GeoQuery {
      *
      * @param listener The listener to add
      */
-
-    // COMPLETED
     public synchronized void addGeoQueryEventListener(final GeoQueryEventListener listener) {
         addGeoQueryDataEventListener(new EventListenerBridge(listener));
     }
@@ -346,8 +354,6 @@ public class GeoQuery {
      *
      * @param listener The listener to add
      */
-
-    // COMPLETED
     public synchronized void addGeoQueryDataEventListener(final GeoQueryDataEventListener listener) {
         if (eventListeners.contains(listener)) {
             throw new IllegalArgumentException("Added the same listener twice to a GeoQuery!");
@@ -387,8 +393,6 @@ public class GeoQuery {
      *
      * @param listener The listener to remove
      */
-
-    // COMPLETED
     public synchronized void removeGeoQueryEventListener(GeoQueryEventListener listener) {
         removeGeoQueryEventListener(new EventListenerBridge(listener));
     }
@@ -400,8 +404,6 @@ public class GeoQuery {
      *
      * @param listener The listener to remove
      */
-
-    // COMPLETED
     public synchronized void removeGeoQueryEventListener(final GeoQueryDataEventListener listener) {
         if (!eventListeners.contains(listener)) {
             throw new IllegalArgumentException("Trying to remove listener that was removed or not added!");
@@ -415,8 +417,6 @@ public class GeoQuery {
     /**
      * Removes all event listeners from this GeoQuery.
      */
-
-    // COMPLETED
     public synchronized void removeAllListeners() {
         eventListeners.clear();
         reset();
@@ -426,8 +426,6 @@ public class GeoQuery {
      * Returns the current center of this query.
      * @return The current center
      */
-
-    // COMPLETED
     public synchronized GeoPoint getCenter() {
         return center;
     }
@@ -436,8 +434,6 @@ public class GeoQuery {
      * Sets the new center of this query and triggers new events if necessary.
      * @param center The new center
      */
-
-    // COMPLETED
     public synchronized void setCenter(GeoPoint center) {
         this.center = center;
         if (this.hasListeners()) {
@@ -449,8 +445,6 @@ public class GeoQuery {
      * Returns the radius of the query, in kilometers.
      * @return The radius of this query, in kilometers
      */
-
-    // COMPLETED
     public synchronized double getRadius() {
         // convert from meters
         return radius / KILOMETER_TO_METER;
@@ -461,8 +455,6 @@ public class GeoQuery {
      * @param radius The radius of the query, in kilometers. The maximum radius that is
      * supported is about 8587km. If a radius bigger than this is passed we'll cap it.
      */
-
-    // COMPLETED
     public synchronized void setRadius(double radius) {
         // convert to meters
         this.radius = GeoUtils.capRadius(radius) * KILOMETER_TO_METER;
@@ -477,8 +469,6 @@ public class GeoQuery {
      * @param radius The radius of the query, in kilometers. The maximum radius that is
      * supported is about 8587km. If a radius bigger than this is passed we'll cap it.
      */
-
-    // COMPLETED
     public synchronized void setLocation(GeoPoint center, double radius) {
         this.center = center;
         // convert radius to meters

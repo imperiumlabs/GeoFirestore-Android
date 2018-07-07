@@ -1,6 +1,5 @@
 package com.imperiumlabs.geofirestore.util;
 
-// COMPLETED
 public final class Constants {
 
     // Length of a degree latitude at the equator

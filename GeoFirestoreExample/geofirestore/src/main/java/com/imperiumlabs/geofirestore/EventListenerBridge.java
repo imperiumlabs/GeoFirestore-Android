@@ -2,13 +2,10 @@ package com.imperiumlabs.geofirestore;
 
 import com.google.firebase.firestore.*;
 import java.lang.Exception;
-import java.util.Objects;
 
 /**
  * GeoQuery notifies listeners with this interface about documents that entered, exited, or moved within the query.
  */
-
-// COMPLETED
 final class EventListenerBridge implements GeoQueryDataEventListener {
     private final GeoQueryEventListener listener;
 

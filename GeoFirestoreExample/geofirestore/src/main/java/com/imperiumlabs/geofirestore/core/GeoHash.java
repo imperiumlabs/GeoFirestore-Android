@@ -5,7 +5,6 @@ import com.imperiumlabs.geofirestore.util.Base32Utils;
 
 import static java.util.Locale.US;
 
-// COMPLETED
 public class GeoHash {
     private final String geoHash;
 

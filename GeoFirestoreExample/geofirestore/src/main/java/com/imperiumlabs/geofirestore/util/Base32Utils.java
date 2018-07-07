@@ -1,6 +1,5 @@
 package com.imperiumlabs.geofirestore.util;
 
-// COMPLETED
 public final class Base32Utils {
 
     /* number of bits per base 32 character */

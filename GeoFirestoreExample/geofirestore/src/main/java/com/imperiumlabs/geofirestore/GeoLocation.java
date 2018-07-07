@@ -3,8 +3,6 @@ package com.imperiumlabs.geofirestore;
 /**
  * A wrapper class for location coordinates.
  */
-
-//COMPLETED
 public final class GeoLocation {
 
     /** The latitude of this location in the range of [-90, 90] */

@@ -4,7 +4,6 @@ import com.imperiumlabs.geofirestore.GeoLocation;
 
 import static  com.imperiumlabs.geofirestore.GeoFirestore.LOGGER;
 
-// COMPLETED
 public final class GeoUtils {
     private static final double MAX_SUPPORTED_RADIUS = 8587;
 
