@@ -225,7 +225,7 @@ the query to the new visible map area after a user scrolls.
 
 ## API Reference & Documentation
 
-Full API reference and documentation is available [here](ourAPIhere)
+Full API reference and documentation is available [here](https://imperiumlabs.github.io/GeoFirestore-Android/)
 
 ## License
 
