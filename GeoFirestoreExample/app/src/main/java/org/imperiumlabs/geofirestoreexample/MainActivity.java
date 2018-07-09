@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements GeoQueryDataEvent
 
     @Override
     public void onGeoQueryError(Exception exception) {
-        Log.d("QUERY_ERROR", exception.toString());
+        Log.d("QUERY_ERROR", exception.getLocalizedMessage());
     }
 
 
