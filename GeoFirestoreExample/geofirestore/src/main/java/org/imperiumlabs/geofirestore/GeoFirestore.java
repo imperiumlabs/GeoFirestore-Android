@@ -10,6 +10,8 @@ import java.lang.Throwable;
 import java.util.*;
 import java.util.logging.Logger;
 
+// FULLY TESTED
+
 /**
  * A GeoFirestore instance is used to store geo location data in Firestore.
  */

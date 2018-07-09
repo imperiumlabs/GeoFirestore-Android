@@ -3,6 +3,8 @@ package org.imperiumlabs.geofirestore;
 import android.os.Handler;
 import android.os.Looper;
 
+// FULLY TESTED
+
 class AndroidEventRaiser implements EventRaiser {
     private final Handler mainThreadHandler;
 

@@ -4,6 +4,8 @@ import com.google.firebase.firestore.GeoPoint;
 
 import java.lang.Exception;
 
+// FULLY TESTED
+
 /**
  * GeoQuery notifies listeners with this interface about documentIDs that entered, exited, or moved within the query.
  */

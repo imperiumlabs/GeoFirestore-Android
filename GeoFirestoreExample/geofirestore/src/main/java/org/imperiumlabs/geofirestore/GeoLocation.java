@@ -1,5 +1,7 @@
 package org.imperiumlabs.geofirestore;
 
+// FULLY TESTED
+
 /**
  * A wrapper class for location coordinates.
  */

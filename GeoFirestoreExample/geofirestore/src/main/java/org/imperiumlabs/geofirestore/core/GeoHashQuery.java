@@ -8,6 +8,8 @@ import org.imperiumlabs.geofirestore.util.GeoUtils;
 import java.util.HashSet;
 import java.util.Set;
 
+// FULLY TESTED
+
 public class GeoHashQuery {
 
     public static final class Utils {

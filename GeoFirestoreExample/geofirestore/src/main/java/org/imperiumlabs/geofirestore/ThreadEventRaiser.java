@@ -3,6 +3,8 @@ package org.imperiumlabs.geofirestore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+// FULLY TESTED
+
 class ThreadEventRaiser implements EventRaiser {
 
     private final ExecutorService executorService;

@@ -3,6 +3,8 @@ package org.imperiumlabs.geofirestore;
 import com.google.firebase.firestore.*;
 import java.lang.Exception;
 
+// FULLY TESTED
+
 /**
  * GeoQuery notifies listeners with this interface about documents that entered, exited, or moved within the query.
  */

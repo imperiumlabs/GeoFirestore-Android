@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
+// FULLY TESTED
+
 /**
  * A GeoQuery object can be used for geo queries in a given circle. The GeoQuery class is thread safe.
  */
