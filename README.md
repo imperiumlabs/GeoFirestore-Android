@@ -21,17 +21,9 @@ Assume you are building an app to rate bars, and you store all information for a
 ## Including GeoFirestore in your Android project
 
 In order to use GeoFirestore in your project, you need to [add the Firestore Android
-SDK](https://firebase.google.com/docs/firestore/quickstart). After that you can include GeoFirestore as shown below.
+SDK](https://firebase.google.com/docs/firestore/quickstart). After that you can include GeoFirestore in your project.
 
-### Gradle
-
-Add a dependency for GeoFirestore to your `gradle.build` file.
-
-```groovy
-dependencies {
-    compile 'com.imperiumlabs:geofirestore-android:0.1.0'
-}
-```
+Follow [these instructions](https://jitpack.io/#imperiumlabs/GeoFirestore-Android/v1.1.0) to add GeoFirestore using gradle, maven, sbt, and leiningen. 
 
 ## Getting Started with Firestore
 
