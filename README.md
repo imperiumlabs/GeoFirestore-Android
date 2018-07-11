@@ -6,7 +6,7 @@ At its heart, GeoFirestore simply stores locations with string keys. Its main be
 
 GeoFirestore uses the Firestore database for data storage, allowing query results to be updated in realtime as they change. GeoFirestore selectively loads only the data near certain locations, keeping your applications light and responsive, even with extremely large datasets.
 
-A compatible GeoFirestore client is also available for [IOS](https://github.com/imperiumlabs/GeoFirestore-IOS).
+A compatible GeoFirestore client is also available for [iOS](https://github.com/imperiumlabs/GeoFirestore-iOS).
 
 For a full example of an application using GeoFirestore to display realtime post data, see the example project in this repo.
 
