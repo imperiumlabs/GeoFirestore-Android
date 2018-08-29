@@ -4,15 +4,26 @@ import android.support.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.*;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
+
 import org.imperiumlabs.geofirestore.core.GeoHash;
 import org.imperiumlabs.geofirestore.core.GeoHashQuery;
 import org.imperiumlabs.geofirestore.util.GeoUtils;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import javax.annotation.Nullable;
 
 // FULLY TESTED
@@ -29,7 +40,7 @@ public class GeoQuery {
         final GeoHash geoHash;
         final DocumentSnapshot documentSnapshot;
 
-        public LocationInfo(GeoPoint location, boolean inGeoQuery, DocumentSnapshot documentSnapshot) {
+        LocationInfo(GeoPoint location, boolean inGeoQuery, DocumentSnapshot documentSnapshot) {
             this.location = location;
             this.inGeoQuery = inGeoQuery;
             this.geoHash = new GeoHash(new GeoLocation(location.getLatitude(), location.getLongitude()));
@@ -42,7 +53,9 @@ public class GeoQuery {
         final ListenerRegistration childRemovedListener;
         final ListenerRegistration childChangedListener;
 
-        public GeoHashQueryListener(ListenerRegistration childAddedListener, ListenerRegistration childRemovedListener, ListenerRegistration childChangedListener){
+        GeoHashQueryListener(ListenerRegistration childAddedListener,
+                             ListenerRegistration childRemovedListener,
+                             ListenerRegistration childChangedListener){
             this.childAddedListener = childAddedListener;
             this.childRemovedListener = childRemovedListener;
             this.childChangedListener = childChangedListener;
@@ -203,15 +216,18 @@ public class GeoQuery {
     }
 
     private void setupQueries() {
-        Set<GeoHashQuery> oldQueries = (this.queries == null) ? new HashSet<GeoHashQuery>() : this.queries;
+        Set<GeoHashQuery> oldQueries = (queries == null) ? new HashSet<GeoHashQuery>() : queries;
         Set<GeoHashQuery> newQueries = GeoHashQuery.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
         this.queries = newQueries;
+
         for (GeoHashQuery query: oldQueries) {
             if (!newQueries.contains(query)) {
                 GeoHashQueryListener handle = handles.get(firestoreQueries.get(query));
-                handle.childAddedListener.remove();
-                handle.childRemovedListener.remove();
-                handle.childChangedListener.remove();
+                if (handle != null) {
+                    handle.childAddedListener.remove();
+                    handle.childRemovedListener.remove();
+                    handle.childChangedListener.remove();
+                }
                 firestoreQueries.remove(query);
                 outstandingQueries.remove(query);
             }
@@ -365,7 +381,6 @@ public class GeoQuery {
             this.setupQueries();
         } else {
             for (final Map.Entry<String, LocationInfo> entry: this.locationInfos.entrySet()) {
-                final String key = entry.getKey();
                 final LocationInfo info = entry.getValue();
 
                 if (info.inGeoQuery) {
