@@ -305,8 +305,6 @@ public class GeoQuery {
         GeoPoint location = GeoFirestore.getLocationValue(documentSnapshot);
         if (location != null) {
             this.updateLocationInfo(documentSnapshot, location);
-        } else {
-            throw new AssertionError("Got DocumentSnapshot without location with key " + documentSnapshot.getId());
         }
     }
 
@@ -314,8 +312,6 @@ public class GeoQuery {
         GeoPoint location = GeoFirestore.getLocationValue(documentSnapshot);
         if (location != null) {
             this.updateLocationInfo(documentSnapshot, location);
-        } else {
-            throw new AssertionError("Got DocumentSnapshot without location with key " + documentSnapshot.getId());
         }
     }
 
