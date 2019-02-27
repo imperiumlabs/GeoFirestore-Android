@@ -400,6 +400,11 @@ public class GeoQuery {
         }
     }
 
+    /**
+     * Get the Firestore query(s) for this GeoQuery.
+     *
+     * @return The Firestore query(s) for this GeoQuery
+     */
     public ArrayList<Query> getQueries() {
         Set<GeoHashQuery> oldQueries = (queries == null) ? new HashSet<GeoHashQuery>() : queries;
         Set<GeoHashQuery> newQueries = GeoHashQuery.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
