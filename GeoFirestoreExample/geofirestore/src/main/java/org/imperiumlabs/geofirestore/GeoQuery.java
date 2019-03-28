@@ -1,6 +1,10 @@
 package org.imperiumlabs.geofirestore;
 
-import android.support.annotation.NonNull;
+
+// FULLY TESTED
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -24,10 +28,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
-
-import javax.annotation.Nullable;
-
-// FULLY TESTED
 
 /**
  * A GeoQuery object can be used for geo queries in a given circle. The GeoQuery class is thread safe.
@@ -91,7 +91,7 @@ public class GeoQuery {
     }
 
     private boolean locationIsInQuery(GeoPoint location) {
-        return GeoUtils.distance(new GeoLocation(location.getLatitude(), location.getLongitude()), new GeoLocation(center.getLatitude(), center.getLongitude())) <= this.radius;
+        return GeoUtils.Companion.distance(new GeoLocation(location.getLatitude(), location.getLongitude()), new GeoLocation(center.getLatitude(), center.getLongitude())) <= this.radius;
     }
 
     private void updateLocationInfo(final DocumentSnapshot documentSnapshot, final GeoPoint location) {
@@ -218,7 +218,7 @@ public class GeoQuery {
 
     private void setupQueries() {
         Set<GeoHashQuery> oldQueries = (queries == null) ? new HashSet<GeoHashQuery>() : queries;
-        Set<GeoHashQuery> newQueries = GeoHashQuery.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
+        Set<GeoHashQuery> newQueries = GeoHashQuery.Companion.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
         this.queries = newQueries;
 
         for (GeoHashQuery query: oldQueries) {
@@ -303,14 +303,14 @@ public class GeoQuery {
     }
 
     private void childAdded(DocumentSnapshot documentSnapshot) {
-        GeoPoint location = GeoFirestore.getLocationValue(documentSnapshot);
+        GeoPoint location = GeoFirestore.Companion.getLocationValue(documentSnapshot);
         if (location != null) {
             this.updateLocationInfo(documentSnapshot, location);
         }
     }
 
     private void childChanged(DocumentSnapshot documentSnapshot) {
-        GeoPoint location = GeoFirestore.getLocationValue(documentSnapshot);
+        GeoPoint location = GeoFirestore.Companion.getLocationValue(documentSnapshot);
         if (location != null) {
             this.updateLocationInfo(documentSnapshot, location);
         }
@@ -326,7 +326,7 @@ public class GeoQuery {
                     if (task.isSuccessful()){
 
                         synchronized (GeoQuery.this) {
-                            GeoPoint location = GeoFirestore.getLocationValue(task.getResult());
+                            GeoPoint location = GeoFirestore.Companion.getLocationValue(task.getResult());
                             GeoHash hash = (location != null) ? new GeoHash(new GeoLocation(location.getLatitude(), location.getLongitude())) : null;
                             if (hash == null || !GeoQuery.this.geoHashQueriesContainGeoHash(hash)) {
                                 final LocationInfo locInfo = locationInfos.remove(documentID);
@@ -506,7 +506,7 @@ public class GeoQuery {
      */
     public synchronized void setRadius(double radius) {
         // convert to meters
-        this.radius = GeoUtils.capRadius(radius) * KILOMETER_TO_METER;
+        this.radius = GeoUtils.Companion.capRadius(radius) * KILOMETER_TO_METER;
         if (this.hasListeners()) {
             this.setupQueries();
         }
@@ -521,7 +521,7 @@ public class GeoQuery {
     public synchronized void setLocation(GeoPoint center, double radius) {
         this.center = center;
         // convert radius to meters
-        this.radius = GeoUtils.capRadius(radius) * KILOMETER_TO_METER;
+        this.radius = GeoUtils.Companion.capRadius(radius) * KILOMETER_TO_METER;
         if (this.hasListeners()) {
             this.setupQueries();
         }

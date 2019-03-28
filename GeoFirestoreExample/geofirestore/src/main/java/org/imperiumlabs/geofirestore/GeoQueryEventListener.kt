@@ -1,15 +1,13 @@
-package org.imperiumlabs.geofirestore;
+package org.imperiumlabs.geofirestore
 
-import com.google.firebase.firestore.GeoPoint;
-
-import java.lang.Exception;
+import com.google.firebase.firestore.GeoPoint
 
 // FULLY TESTED
 
 /**
  * GeoQuery notifies listeners with this interface about documentIDs that entered, exited, or moved within the query.
  */
-public interface GeoQueryEventListener {
+interface GeoQueryEventListener {
 
     /**
      * Called if a documentID entered the search area of the GeoQuery. This method is called for every documentID currently in the
@@ -20,7 +18,7 @@ public interface GeoQueryEventListener {
      * @param documentID The documentID that entered the search area
      * @param location The location for this documentID
      */
-    void onKeyEntered(String documentID, GeoPoint location);
+    fun onKeyEntered(documentID: String, location: GeoPoint)
 
     /**
      * Called if a documentID exited the search area of the GeoQuery. This method is only called if onKeyEntered was called
@@ -28,7 +26,7 @@ public interface GeoQueryEventListener {
      *
      * @param documentID The documentID that exited the search area
      */
-    void onKeyExited(String documentID);
+    fun onKeyExited(documentID: String)
 
     /**
      * Called if a documentID moved within the search area.
@@ -38,19 +36,19 @@ public interface GeoQueryEventListener {
      * @param documentID The documentID that moved within the search area
      * @param location The location for this documentID
      */
-    void onKeyMoved(String documentID, GeoPoint location);
+    fun onKeyMoved(documentID: String, location: GeoPoint)
 
     /**
      * Called once all initial GeoFirestore data has been loaded and the relevant events have been fired for this query.
      * Every time the query criteria is updated, this observer will be called after the updated query has fired the
      * appropriate key entered or key exited events.
      */
-    void onGeoQueryReady();
+    fun onGeoQueryReady()
 
     /**
      * Called in case an exception occurred while retrieving locations for a query, e.g. violating security rules.
      * @param exception The exception that occurred while retrieving the query
      */
-    void onGeoQueryError(Exception exception);
+    fun onGeoQueryError(exception: Exception)
 
 }

@@ -1,12 +1,13 @@
 package org.imperiumlabs.geofirestoreexample;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.*;
 import java.util.*;
 import com.google.firebase.firestore.*;
 import org.imperiumlabs.geofirestore.*;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity implements GeoQueryDataEventListener{
 
@@ -69,9 +70,9 @@ public class MainActivity extends AppCompatActivity implements GeoQueryDataEvent
                 postList.add(description);
             }
         } catch (NullPointerException e) {
-            Log.d("DOCUMENT_ERROR", e.getLocalizedMessage());
+            Log.e("DOCUMENT_ERROR", e.getLocalizedMessage());
         } catch (ClassCastException e) {
-            Log.d("DOCUMENT_ERROR", e.getLocalizedMessage());
+            Log.e("DOCUMENT_ERROR", e.getLocalizedMessage());
         }
     }
 
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements GeoQueryDataEvent
 
     @Override
     public void onGeoQueryError(Exception exception) {
-        Log.d("QUERY_ERROR", exception.getLocalizedMessage());
+        Log.e("QUERY_ERROR", exception.getLocalizedMessage());
     }
 
 
