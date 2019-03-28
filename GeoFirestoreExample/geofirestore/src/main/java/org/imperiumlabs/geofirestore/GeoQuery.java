@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 
 import javax.annotation.Nullable;
 
@@ -397,6 +398,41 @@ public class GeoQuery {
                 });
             }
         }
+    }
+
+    /**
+     * Get the Firestore query(s) for this GeoQuery.
+     *
+     * @return The Firestore query(s) for this GeoQuery
+     */
+    public ArrayList<Query> getQueries() {
+        Set<GeoHashQuery> oldQueries = (queries == null) ? new HashSet<GeoHashQuery>() : queries;
+        Set<GeoHashQuery> newQueries = GeoHashQuery.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
+        this.queries = newQueries;
+
+        for (GeoHashQuery query: oldQueries) {
+            if (!newQueries.contains(query)) {
+                GeoHashQueryListener handle = handles.get(firestoreQueries.get(query));
+                if (handle != null) {
+                    handle.childAddedListener.remove();
+                    handle.childRemovedListener.remove();
+                    handle.childChangedListener.remove();
+                }
+                firestoreQueries.remove(query);
+                outstandingQueries.remove(query);
+            }
+        }
+
+        ArrayList<Query> queries = new ArrayList<Query>();
+        for (final GeoHashQuery query: newQueries) {
+            if (!oldQueries.contains(query)) {
+                outstandingQueries.add(query);
+                CollectionReference collectionReference = this.geoFirestore.getCollectionReference();
+                Query firestoreQuery = collectionReference.orderBy("g").startAt(query.getStartValue()).endAt(query.getEndValue());
+                queries.add(firestoreQuery);
+            }
+        }
+        return queries;
     }
 
     /**
