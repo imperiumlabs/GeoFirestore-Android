@@ -11,30 +11,27 @@ import java.util.HashSet
 class GeoHashQuery(var startValue: String, var endValue: String) {
 
 
-    class Utils {
+    object Utils {
 
-        companion object {
-
-            fun bitsLatitude(resolution: Double) =
+        fun bitsLatitude(resolution: Double) =
                 Math.min(
-                    Math.log(Constants.EARTH_MERIDIONAL_CIRCUMFERENCE / 2 / resolution) / Math.log(2.0),
-                    GeoHash.MAX_PRECISION_BITS.toDouble()
+                        Math.log(Constants.EARTH_MERIDIONAL_CIRCUMFERENCE / 2 / resolution) / Math.log(2.0),
+                        GeoHash.MAX_PRECISION_BITS.toDouble()
                 )
 
-            fun bitsLongitude(resolution: Double, latitude: Double): Double {
-                val degrees = GeoUtils.distanceToLongitudeDegrees(resolution, latitude)
-                return if (Math.abs(degrees) > 0) Math.max(1.0, Math.log(360 / degrees) / Math.log(2.0)) else 1.0
-            }
+        fun bitsLongitude(resolution: Double, latitude: Double): Double {
+            val degrees = GeoUtils.distanceToLongitudeDegrees(resolution, latitude)
+            return if (Math.abs(degrees) > 0) Math.max(1.0, Math.log(360 / degrees) / Math.log(2.0)) else 1.0
+        }
 
-            fun bitsForBoundingBox(location: GeoLocation, size: Double): Int {
-                val latitudeDegreesDelta = GeoUtils.distanceToLatitudeDegrees(size)
-                val latitudeNorth = Math.min(90.0, location.latitude + latitudeDegreesDelta)
-                val latitudeSouth = Math.max(-90.0, location.latitude - latitudeDegreesDelta)
-                val bitsLatitude = (Math.floor(bitsLatitude(size)) * 2).toInt()
-                val bitsLongitudeNorth = (Math.floor(bitsLongitude(size, latitudeNorth)) * 2 - 1).toInt()
-                val bitsLongitudeSouth = (Math.floor(bitsLongitude(size, latitudeSouth)) * 2 - 1).toInt()
-                return Math.min(bitsLatitude, Math.min(bitsLongitudeNorth, bitsLongitudeSouth))
-            }
+        fun bitsForBoundingBox(location: GeoLocation, size: Double): Int {
+            val latitudeDegreesDelta = GeoUtils.distanceToLatitudeDegrees(size)
+            val latitudeNorth = Math.min(90.0, location.latitude + latitudeDegreesDelta)
+            val latitudeSouth = Math.max(-90.0, location.latitude - latitudeDegreesDelta)
+            val bitsLatitude = (Math.floor(bitsLatitude(size)) * 2).toInt()
+            val bitsLongitudeNorth = (Math.floor(bitsLongitude(size, latitudeNorth)) * 2 - 1).toInt()
+            val bitsLongitudeSouth = (Math.floor(bitsLongitude(size, latitudeSouth)) * 2 - 1).toInt()
+            return Math.min(bitsLatitude, Math.min(bitsLongitudeNorth, bitsLongitudeSouth))
         }
     }
 
@@ -120,26 +117,30 @@ class GeoHashQuery(var startValue: String, var endValue: String) {
         }
     }
 
-    private fun isPrefix(other: GeoHashQuery) = (other.endValue >= this.startValue) &&
-                (other.startValue < this.startValue) &&
-                (other.endValue < this.endValue)
+    private fun isPrefix(other: GeoHashQuery) =
+            (other.endValue >= this.startValue) &&
+                    (other.startValue < this.startValue) &&
+                    (other.endValue < this.endValue)
 
     private fun isSuperQuery(other: GeoHashQuery): Boolean {
         val startCompare = other.startValue.compareTo(this.startValue)
         return startCompare <= 0 && other.endValue >= this.endValue
     }
 
-    fun canJoinWith(other: GeoHashQuery) = this.isPrefix(other) || other.isPrefix(this) || this.isSuperQuery(other) || other.isSuperQuery(this)
+    fun canJoinWith(other: GeoHashQuery) =
+            this.isPrefix(other) ||
+                    other.isPrefix(this) ||
+                    this.isSuperQuery(other) ||
+                    other.isSuperQuery(this)
 
-    fun joinWith(other: GeoHashQuery): GeoHashQuery {
-        return when {
-            other.isPrefix(this) -> GeoHashQuery(this.startValue, other.endValue)
-            this.isPrefix(other) -> GeoHashQuery(other.startValue, this.endValue)
-            this.isSuperQuery(other) -> other
-            other.isSuperQuery(this) -> this
-            else -> throw IllegalArgumentException("Can't join these 2 queries: $this, $other")
-        }
-    }
+    fun joinWith(other: GeoHashQuery) =
+            when {
+                other.isPrefix(this) -> GeoHashQuery(this.startValue, other.endValue)
+                this.isPrefix(other) -> GeoHashQuery(other.startValue, this.endValue)
+                this.isSuperQuery(other) -> other
+                other.isSuperQuery(this) -> this
+                else -> throw IllegalArgumentException("Can't join these two queries: $this, $other")
+            }
 
     fun containsGeoHash(hash: GeoHash): Boolean {
         val hashStr = hash.geoHashString
@@ -152,9 +153,7 @@ class GeoHashQuery(var startValue: String, var endValue: String) {
         return true
     }
 
-    override fun hashCode(): Int {
-        return 31* startValue.hashCode() + endValue.hashCode()
-    }
+    override fun hashCode() = (31 * startValue.hashCode() + endValue.hashCode())
 
     override fun toString() = "GeoHashQuery(startValue='$startValue', endValue='$endValue')"
 }
