@@ -1,6 +1,6 @@
 package org.imperiumlabs.geofirestore.extension
 
-/*
+/**
  * Map every object of T in an Iterable to a MutableCollection of R
  * excluding the non null's elements
  *
@@ -17,11 +17,12 @@ package org.imperiumlabs.geofirestore.extension
  *          -list2 [1,2,3,4,5]
  */
 inline fun<T, R, C:MutableCollection<in R>> Iterable<T>.mapNotNullManyTo(destination: C, transform: (T)->Collection<R?>?): C {
-    forEach { element -> transform(element)?.let { collection ->
-        val c = arrayListOf<R>()
-        collection.forEach {r -> r?.let { c.add(it) } }
-        destination.addAll(c)
-    }
+    forEach { element ->
+        transform(element)?.let { collection ->
+            val c = arrayListOf<R>()
+            collection.forEach { r -> r?.let { c.add(it) } }
+            destination.addAll(c)
+        }
     }
     return destination
 }

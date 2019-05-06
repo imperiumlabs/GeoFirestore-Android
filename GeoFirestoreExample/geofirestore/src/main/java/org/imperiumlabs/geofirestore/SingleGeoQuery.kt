@@ -4,6 +4,7 @@ import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import org.imperiumlabs.geofirestore.callbacks.SingleGeoQueryDataEventListener
 import org.imperiumlabs.geofirestore.core.GeoHashQuery
@@ -13,14 +14,20 @@ import org.imperiumlabs.geofirestore.extension.mapNotNullManyTo
  * A SingleGeoQuery object can be used for a geo query of one-shot type,
  * it fires only one time and notify every listener attached to it
  */
-class SingleGeoQuery(private val geoFirestore: GeoFirestore,
-                     private val center: GeoPoint,
-                     private val radius: Double) {
+class SingleGeoQuery(
+        //The instance of GeoFirestore
+        private val mGeoFirestore: GeoFirestore,
+        //The GeoPoint to center the query
+        private val mCenterPoint: GeoPoint,
+        //The radius of search
+        private val mRadius: Double) {
 
     //The setupQuery method has already been called?
-    private var geoQueryInitialized = false
+    private var mGeoQueryInitialized = false
     //Store all the listeners
-    private val eventListeners = arrayListOf<SingleGeoQueryDataEventListener>()
+    private val mEventListeners = arrayListOf<SingleGeoQueryDataEventListener>()
+    //Store the data previously sent in order to notify immediately
+    private val mOldData = arrayListOf<DocumentSnapshot>()
 
     /*
      * Get the GeoHashQuery for a location and a radius and for each
@@ -30,39 +37,77 @@ class SingleGeoQuery(private val geoFirestore: GeoFirestore,
      * in order to reduce the calls to the listeners.
      */
     private fun setupQuery() {
-        geoQueryInitialized = true
+        mGeoQueryInitialized = true
 
-        val queries = GeoHashQuery.queriesAtLocation(GeoLocation(center.latitude, center.longitude), radius)
-        val resultTask = arrayListOf<Task<QuerySnapshot>>()
-
-        for (query in queries) {
-            val firestoreQuery = geoFirestore.collectionReference
-                    .orderBy("g")
-                    .startAt(query.startValue)
-                    .endAt(query.endValue)
-            resultTask.add(firestoreQuery.get())
+        //Get the resultTasks from Firebase Queries generated from GeoHashQueries
+        val resultTasks = arrayListOf<Task<QuerySnapshot>>().apply {
+            GeoHashQuery.queriesAtLocation(
+                    GeoLocation(mCenterPoint.latitude, mCenterPoint.longitude),
+                    mRadius
+            ).forEach { this.add(it.createFirestoreQuery().get()) }
         }
 
-        Tasks.whenAllComplete(resultTask)
+        //Await the completion of all the resultTasks
+        Tasks.whenAllComplete(resultTasks)
                 .addOnFailureListener { e ->
+                    //Some error occurred, notify it to the listeners
                     GeoFirestore.LOGGER.warning("Failed retrieving data for geo query")
-                    eventListeners.forEach { it.onError(e) }
+                    mEventListeners.forEach { it.onError(e) }
                 }
                 .addOnSuccessListener { tasks ->
+                    //Data retrieved, extract it from the tasks and pass it to the listeners
                     val documentSnapshots = arrayListOf<DocumentSnapshot>()
                     tasks.mapNotNullManyTo(documentSnapshots) { (it.result as? QuerySnapshot)?.documents }
-                    eventListeners.forEach { it.onSuccess(documentSnapshots) }
+                    mEventListeners.forEach { it.onSuccess(documentSnapshots) }
                 }
+    }
+
+    /*
+     * Extension function used to create a Firebase Query
+     * from a GeoHashQuery and the GeoFirestore instance
+     * of this class.
+     *
+     * This method is private and works only inside this class.
+     */
+    private fun GeoHashQuery.createFirestoreQuery() =
+            mGeoFirestore.collectionReference
+                    .orderBy("g")
+                    .startAt(this.startValue)
+                    .endAt(this.endValue)
+
+    /*
+     * Reset the SingleGeoQuery clearing the old data
+     */
+    private fun reset() {
+        mGeoQueryInitialized = false
+        mOldData.clear()
+    }
+
+    /**
+     * Get the Firestore query(s) for this SingleGeoQuery
+     *
+     * @return A list of Firestore Query(s)
+     */
+    fun getQueries() = arrayListOf<Query>().apply {
+        GeoHashQuery.queriesAtLocation(
+                GeoLocation(mCenterPoint.latitude, mCenterPoint.longitude),
+                mRadius
+        ).forEach { this.add(it.createFirestoreQuery()) }
     }
 
     /**
      * Add a SingleGeoQueryDataEventListener
      */
     fun addSingleGeoQueryEventListener(listener: SingleGeoQueryDataEventListener) {
-        if (eventListeners.contains(listener))
+        if (mEventListeners.contains(listener))
             throw IllegalArgumentException("Added the same listener twice to a SingleGeoQuery!")
-        eventListeners.add(listener)
-        if (!geoQueryInitialized)
+        //Add the listener to the others
+        mEventListeners.add(listener)
+        //Check if there are some data previously crated
+        if (mOldData.isNotEmpty())
+            mEventListeners.forEach { it.onSuccess(mOldData) }
+        //If the query is not initialized initialize it
+        if (!mGeoQueryInitialized)
             setupQuery()
     }
 
@@ -70,10 +115,11 @@ class SingleGeoQuery(private val geoFirestore: GeoFirestore,
      * Remove a SingleGeoQueryDataEventListener
      */
     fun removeSingleGeoQueryEventListener(listener: SingleGeoQueryDataEventListener) {
-        if (!eventListeners.contains(listener))
+        if (!mEventListeners.contains(listener))
             throw IllegalArgumentException("Trying to remove listener that was removed or not added!")
-        eventListeners.remove(listener)
-        if (!hasListeners())
+        mEventListeners.remove(listener)
+        //If there are no more listeners we reset the query
+        if (mEventListeners.isEmpty())
             reset()
     }
 
@@ -81,13 +127,7 @@ class SingleGeoQuery(private val geoFirestore: GeoFirestore,
      * Remove all the attached listeners
      */
     fun removeAllListeners() {
-        eventListeners.clear()
+        mEventListeners.clear()
         reset()
-    }
-
-    private fun hasListeners() = eventListeners.isNotEmpty()
-
-    private fun reset() {
-        geoQueryInitialized = false
     }
 }

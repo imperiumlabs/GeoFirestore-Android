@@ -1,39 +1,82 @@
 {
   "project_info": {
-    "project_number": "327988587760",
-    "firebase_url": "https://geofirestoreexample-4a946.firebaseio.com",
-    "project_id": "geofirestoreexample-4a946",
-    "storage_bucket": "geofirestoreexample-4a946.appspot.com"
+    "project_number": "384239095893",
+    "firebase_url": "https://geofirestoreexample-31e4a.firebaseio.com",
+    "project_id": "geofirestoreexample-31e4a",
+    "storage_bucket": "geofirestoreexample-31e4a.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:327988587760:android:b7aa137d77149e12",
+        "mobilesdk_app_id": "1:384239095893:android:cc914ae167f6bbe8",
+        "android_client_info": {
+          "package_name": "com.supercaly.geofirestore"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "384239095893-gg7mu89bsk3ul0pi6ad19ocodbm433vh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.supercaly.geofirestore",
+            "certificate_hash": "ebbf34d44976d4478565823ba692b62f73ad184f"
+          }
+        },
+        {
+          "client_id": "384239095893-cvfdvbsmrt58vdg582bsdjq3a2vqgj62.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNpFP4phqAt_p-SD_BhThWq8nzyd0v2Qc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "384239095893-cvfdvbsmrt58vdg582bsdjq3a2vqgj62.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:384239095893:android:b7aa137d77149e12",
         "android_client_info": {
           "package_name": "org.imperiumlabs.geofirestoreexample"
         }
       },
       "oauth_client": [
         {
-          "client_id": "327988587760-g04v52n6ocmqf9jna9nmqte1mbcl09vn.apps.googleusercontent.com",
+          "client_id": "384239095893-9e1phoj9bhaklrlu7k643i04c8tjnjo3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.imperiumlabs.geofirestoreexample",
+            "certificate_hash": "ebbf34d44976d4478565823ba692b62f73ad184f"
+          }
+        },
+        {
+          "client_id": "384239095893-cvfdvbsmrt58vdg582bsdjq3a2vqgj62.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC82hsfqNeB2Dw3n8nSGWIF_rzS3xPtZ9Y"
+          "current_key": "AIzaSyBNpFP4phqAt_p-SD_BhThWq8nzyd0v2Qc"
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
-        },
-        "ads_service": {
-          "status": 2
+          "other_platform_oauth_client": [
+            {
+              "client_id": "384239095893-cvfdvbsmrt58vdg582bsdjq3a2vqgj62.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

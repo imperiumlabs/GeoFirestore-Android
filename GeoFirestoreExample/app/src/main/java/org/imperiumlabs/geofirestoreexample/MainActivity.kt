@@ -11,15 +11,17 @@ import kotlinx.android.synthetic.main.activity_main.*
 import org.imperiumlabs.geofirestore.GeoFirestore
 import org.imperiumlabs.geofirestore.callbacks.GeoQueryDataEventListener
 import org.imperiumlabs.geofirestore.callbacks.SingleGeoQueryDataEventListener
+import org.imperiumlabs.geofirestore.extension.getLocation
+import org.imperiumlabs.geofirestore.extension.setLocation
 
 class MainActivity: AppCompatActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
-        private val POST_COLLECTION = "POSTS"
+        private const val POST_COLLECTION = "POSTS"
 
         private val QUERY_CENTER = GeoPoint(37.7853889, -122.4056973)
-        private val QUERY_RADIUS = 5.0
+        private const val QUERY_RADIUS = 5.0
     }
 
     private val db = FirebaseFirestore.getInstance()
@@ -39,7 +41,7 @@ class MainActivity: AppCompatActivity() {
         testSimpleGeoQuery()
     }
 
-    fun testSimpleGeoQuery() {
+    private fun testSimpleGeoQuery() {
         val singleGeoQuery = geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS)
         singleGeoQuery.addSingleGeoQueryEventListener(object : SingleGeoQueryDataEventListener {
             override fun onSuccess(documentSnapshots: List<DocumentSnapshot>) {
@@ -57,7 +59,7 @@ class MainActivity: AppCompatActivity() {
         })
     }
 
-    fun testGeoQuery() {
+    private fun testGeoQuery() {
         val geoQuery = geoFirestore.queryAtLocation(QUERY_CENTER, QUERY_RADIUS)
         geoQuery.addGeoQueryDataEventListener(object : GeoQueryDataEventListener {
             override fun onDocumentEntered(documentSnapshot: DocumentSnapshot, location: GeoPoint) {

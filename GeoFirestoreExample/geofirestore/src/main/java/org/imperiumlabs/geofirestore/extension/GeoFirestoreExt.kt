@@ -2,11 +2,13 @@ package org.imperiumlabs.geofirestore.extension
 
 import com.google.firebase.firestore.GeoPoint
 import org.imperiumlabs.geofirestore.GeoFirestore
+
 /*
  * This file contains a series of extension functions
  * used to differentiate the Kotlin lambda version of
  * the same functions in the GeoFirestore class
  */
+
 /**
  * Gets the current location for a document and calls the callback with the current value.
  *

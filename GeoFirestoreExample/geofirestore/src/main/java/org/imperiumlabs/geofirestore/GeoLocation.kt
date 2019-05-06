@@ -6,9 +6,9 @@ package org.imperiumlabs.geofirestore
  * A wrapper class for location coordinates.
  */
 class GeoLocation(
-    /** The latitude of this location in the range of [-90, 90] */
+    // The latitude of this location in the range of [-90, 90]
     val latitude: Double,
-    /** The longitude of this location in the range of [-180, 180] */
+    // The longitude of this location in the range of [-180, 180]
     val longitude: Double) {
 
     companion object {
@@ -24,6 +24,7 @@ class GeoLocation(
                     longitude >= -180 &&
                     longitude <= 180
     }
+
     /**
      * Creates a new GeoLocation with the given latitude and longitude.
      *
