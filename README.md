@@ -34,50 +34,36 @@ GeoFirestore requires the Firestore database in order to store location data. Yo
 
 A `GeoFirestore` object is used to read and write geo location data to your Firestore database and to create queries. To create a new `GeoFirestore` instance you need to attach it to a Firestore collection reference:
 
-```java
-CollectionReference geoFirestoreRef = FirebaseFirestore.getInstance().collection("my-collection");
-GeoFirestore geoFirestore = new GeoFirestore(geoFirestoreRef);
+```kotlin
+val geoFirestoreRef = FirebaseFirestore.getInstance().collection("my-collection")
+val geoFirestore = GeoFirestore(geoFirestoreRef)
 ```
 
 #### Setting location data
 
 To set the location of a document simply call the `setLocation` method:
 
-```java
-geoFirestore.setLocation("que8B9fxxjcvbC81h32VRjeBSUW2", new GeoPoint(37.7853889, -122.4056973));
-```
-
-To check if a write was successfully saved on the server, you can add a
-`GeoFirestore.CompletionListener` to the `setLocation` call:
-
-```java
-geoFirestore.setLocation("que8B9fxxjcvbC81h32VRjeBSUW2", new GeoPoint(37.7853889, -122.4056973), new GeoFirestore.CompletionListener() {
-    @Override
-    public void onComplete(Exception exception) {
-        if (exception == null){
-            System.out.println("Location saved on server successfully!");
-        }
-    }
-});
+```kotlin
+geoFirestore.setLocation("que8B9fxxjcvbC81h32VRjeBSUW2", GeoPoint(37.7853889, -122.4056973)) { exception ->
+    if (exception == null)
+        Log.d(TAG, "Location saved on server successfully!")
+}
 ```
 
 To remove a location and delete the location from your database simply call:
 
-```java
-geoFirestore.removeLocation("que8B9fxxjcvbC81h32VRjeBSUW2");
+```kotlin
+geoFirestore.removeLocation("que8B9fxxjcvbC81h32VRjeBSUW2")
 ```
 
 #### Retrieving a location
 
 Retrieving locations happens with callbacks. If the document is not present in GeoFirestore, the callback will be called with `null`. If an error occurred, the callback is passed the error and the location will be `null`.
 
-```java
-geoFirestore.getLocation("que8B9fxxjcvbC81h32VRjeBSUW2", new GeoFirestore.LocationCallback() {
-    @Override
-    public void onComplete(GeoPoint location, Exception exception) {
-        if (exception == null && location != null){
-            System.out.println(String.format("The location for this document is [%f,%f]", location.getLatitude(), location.getLongitude()));
-        }
+```kotlin
+geoFirestore.getLocation("que8B9fxxjcvbC81h32VRjeBSUW2") { location, exception ->
+    if (exception == null && location != null){
+        Log.d(TAG, String.format("The location for this document is [%f,%f]", location.getLatitude()location.getLongitude()));
     }
 });
 ```
@@ -87,9 +73,9 @@ geoFirestore.getLocation("que8B9fxxjcvbC81h32VRjeBSUW2", new GeoFirestore.Locati
 GeoFirestore allows you to query all documents within a geographic area using `GeoQuery`
 objects. As the locations for documents change, the query is updated in realtime and fires events letting you know if any relevant documents have moved. `GeoQuery` parameters can be updated later to change the size and center of the queried area.
 
-```java
+```kotlin
 // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
-GeoQuery geoQuery = geoFirestore.queryAtLocation(new GeoPoint(37.7832, -122.4056), 0.6);
+val geoQuery = geoFirestore.queryAtLocation(GeoPoint(37.7832, -122.4056), 0.6)
 ```
 
 #### Receiving events for geo queries
