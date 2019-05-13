@@ -18,18 +18,26 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         /**
          * Build a GeoPoint from a DocumentSnapshot
          *
+         * This model takes as a input a DocumentSnapshot and tries to extract the parameter "l",
+         * if it is of type List we extract latitude and longitude and create a valid GeoPoint,
+         * if it is already a GeoPoint we return it, in every other case we return null.
+         *
          * @param documentSnapshot The DocumentSnapshot from which to get the Location Data
          * @return Nullable GeoPoint with the location of the documentSnapshot
          */
         fun getLocationValue(documentSnapshot: DocumentSnapshot): GeoPoint? {
             return try {
-                val data = documentSnapshot.data!!
-                val location = data["l"] as List<*>
-                val latitudeObj = location[0] as Double
-                val longitudeObj = location[1] as Double
-                if (location.size == 2 && GeoLocation.coordinatesValid(latitudeObj, longitudeObj))
-                    GeoPoint(latitudeObj, longitudeObj)
-                else null
+                when (val locationDataRaw = documentSnapshot.data!!["l"]) {
+                    is List<*> -> {
+                        val latitudeObj = locationDataRaw[0] as Double
+                        val longitudeObj = locationDataRaw[1] as Double
+                        if (locationDataRaw.size == 2 && GeoLocation.coordinatesValid(latitudeObj, longitudeObj))
+                            GeoPoint(latitudeObj, longitudeObj)
+                        else null
+                    }
+                    is GeoPoint -> locationDataRaw
+                    else -> null
+                }
             } catch (e: NullPointerException) {
                 null
             } catch (e: ClassCastException) {
@@ -112,6 +120,7 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         //Create a Map with the fields to add
         val updates = HashMap<String, Any>()
         updates["g"] = geoHash.geoHashString
+        // TODO: 13/05/19 change the location from List to GeoPoint to support geofirestore-js
         updates["l"] = listOf(location.latitude, location.longitude)
         //Update the DocumentReference with the location data
         docRef.set(updates, SetOptions.merge())
