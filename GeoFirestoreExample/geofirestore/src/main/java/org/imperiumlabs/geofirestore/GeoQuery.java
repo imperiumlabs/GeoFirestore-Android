@@ -407,7 +407,7 @@ public class GeoQuery {
      */
     public ArrayList<Query> getQueries() {
         Set<GeoHashQuery> oldQueries = (queries == null) ? new HashSet<GeoHashQuery>() : queries;
-        Set<GeoHashQuery> newQueries = GeoHashQuery.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
+        Set<GeoHashQuery> newQueries = GeoHashQuery.Companion.queriesAtLocation(new GeoLocation(center.getLatitude(), center.getLongitude()), radius);
         this.queries = newQueries;
 
         for (GeoHashQuery query: oldQueries) {
