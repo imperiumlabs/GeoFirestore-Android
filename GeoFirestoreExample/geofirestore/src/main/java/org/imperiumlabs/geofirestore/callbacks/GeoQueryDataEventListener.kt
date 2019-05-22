@@ -1,4 +1,4 @@
-package org.imperiumlabs.geofirestore
+package org.imperiumlabs.geofirestore.callbacks
 
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.GeoPoint

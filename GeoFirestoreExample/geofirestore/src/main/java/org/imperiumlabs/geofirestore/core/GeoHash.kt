@@ -1,13 +1,15 @@
 package org.imperiumlabs.geofirestore.core
 
 import org.imperiumlabs.geofirestore.util.Base32Utils
-import org.imperiumlabs.geofirestore.util.Base32Utils.Companion.BITS
+import org.imperiumlabs.geofirestore.util.Base32Utils.BITS
 import org.imperiumlabs.geofirestore.GeoLocation
 import java.util.Locale.US
 
+// TODO: 05/05/19 Test if makeGeoHash() work correctly
 
-// FULLY TESTED
-
+/**
+ * A GeoHash instance is used to generate and store geohash strings
+ */
 class GeoHash {
 
     //The GeoHash String value
@@ -26,10 +28,16 @@ class GeoHash {
 
     }
 
+    //Constructor with latitude, longitude and DEFAULT_PRECISION
     constructor(latitude: Double, longitude: Double): this(latitude, longitude, DEFAULT_PRECISION)
 
+    //Constructor with GeoLocation and DEFAULT_PRECISION
     constructor(location: GeoLocation): this(location.latitude, location.longitude, DEFAULT_PRECISION)
 
+    //Constructor with GeoLocation and precision
+    constructor(location: GeoLocation, precision: Int): this(location.latitude, location.longitude, precision)
+
+    //Constructor with latitude, longitude and precision
     constructor(latitude: Double, longitude: Double, precision: Int) {
         if (precision < 1)
             throw IllegalArgumentException("Precision of GeoHash must be larger than zero!")
@@ -40,26 +48,33 @@ class GeoHash {
         if (!GeoLocation.coordinatesValid(latitude, longitude))
             throw IllegalArgumentException(String.format(US, "Not valid location coordinates: [%f, %f]", latitude, longitude))
 
-        /*
-         * The supplied data are valid... start creating the geohash
-         *
-         * We have two nested loop:
-         *  - the inner loop cycle every bit from 0 to 4 and consider if it's in an even position
-         *    if so we calculate the value based on the longitude
-         *    else we calculate the value based on the latitude
-         *    at the end we convert the value to the corresponding Base32 char using the Base32Utils
-         *    method.
-         *  - the outer loop repeat the value calculation until we obtain a word of length precision
-         */
+        //The supplied data are valid... start creating the geo hash
+        this.geoHashString = makeGeoHash(latitude, longitude, precision)
+    }
+
+    //Constructor with hash string
+    constructor(hash: String) {
+        if (hash.isEmpty() || !Base32Utils.isValidBase32String(hash))
+            throw IllegalArgumentException("Not a valid geoHashString: $hash")
+        this.geoHashString = hash
+    }
+
+    /*
+     * Make the geohash string from supplied latitude, longitude, precision
+     */
+    private fun makeGeoHash(latitude: Double, longitude: Double, precision: Int): String {
         val lat = arrayOf(-90.0, 90.0)
         val lon = arrayOf(-180.0, 180.0)
         val buffer = CharArray(precision)
+
+        //Calculate the value for every letter until we obtain a word of length precision
         for (i in 0 until precision) {
-            //for every letter-to-be
             var value = 0
+            //Cycle every bit from 0 to BITS_PER_BASE32_CHAR (4)
             for (j in 0 until Base32Utils.BITS_PER_BASE32_CHAR) {
                 val evenBit = (((i* Base32Utils.BITS_PER_BASE32_CHAR) + j) % 2) == 0
                 if (evenBit) {
+                    //If it's in an even position we calculate the value based on the longitude
                     val mid = (lon[0] + lon[1]) / 2
                     if (longitude > mid) {
                         value = value or BITS[j]
@@ -67,6 +82,7 @@ class GeoHash {
                     } else
                         lon[1] = mid
                 } else {
+                    //If it's in an odd position we calculate the value based on the latitude
                     val mid = (lat[0] + lat[1]) / 2
                     if (latitude > mid) {
                         value = value or BITS[j]
@@ -77,14 +93,7 @@ class GeoHash {
             }
             buffer[i] = Base32Utils.valueToBase32Char(value)
         }
-        this.geoHashString = String(buffer)
-    }
-
-
-    constructor(hash: String) {
-        if (hash.isEmpty() || !Base32Utils.isValidBase32String(hash))
-            throw IllegalArgumentException("Not a valid geoHashString: $hash")
-        this.geoHashString = hash
+        return String(buffer)
     }
 
     override fun equals(other: Any?): Boolean {

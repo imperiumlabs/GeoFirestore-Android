@@ -65,6 +65,7 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         fun onComplete(location: GeoPoint?, exception: Exception?)
     }
 
+    //Instance of the EventRaiser
     private var mEventRaiser: EventRaiser
 
     init {
@@ -97,22 +98,6 @@ class GeoFirestore(val collectionReference: CollectionReference) {
      *
      * @param documentID The documentID of the document to save the location for
      * @param location The location of this document
-     * @param completionListener Lambda function called when the location was succesfully saved on the server
-     *                           or an error occurred
-     */
-    fun setLocation(documentID: String?, location: GeoPoint, completionListener: (exception: Exception?)->Unit) {
-        this.setLocation(documentID, location, object : CompletionListener {
-            override fun onComplete(exception: Exception?) {
-                completionListener(exception)
-            }
-        })
-    }
-
-    /**
-     * Sets the location of a document.
-     *
-     * @param documentID The documentID of the document to save the location for
-     * @param location The location of this document
      * @param completionListener A listener that is called once the location was successfully saved on the server
      *                           or an error occurred
      */
@@ -129,12 +114,9 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         updates["g"] = geoHash.geoHashString
         updates["l"] = listOf(location.latitude, location.longitude)
         //Update the DocumentReference with the location data
-        docRef.set(updates, SetOptions.merge()).addOnCompleteListener{
-            if (it.isSuccessful)
-                completionListener?.onComplete(null)
-            else
-                completionListener?.onComplete(it.exception)
-        }
+        docRef.set(updates, SetOptions.merge())
+                .addOnSuccessListener { completionListener?.onComplete(null) }
+                .addOnFailureListener { completionListener?.onComplete(it) }
     }
 
     /**
@@ -146,20 +128,6 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         this.removeLocation(documentID, null)
     }
 
-    /**
-     * Removes the location of a document from this GeoFirestore.
-     *
-     * @param documentID The documentID of the document to remove from this GeoFirestore
-     * @param completionListener A lambda function that is called once the location is successfully removed
-     *                           from the server or an error occurred
-     */
-    fun removeLocation(documentID: String?, completionListener: (exception: Exception?)->Unit) {
-        this.removeLocation(documentID, object : CompletionListener {
-            override fun onComplete(exception: Exception?) {
-                completionListener(exception)
-            }
-        })
-    }
     /**
      * Removes the location of a document from this GeoFirestore.
      *
@@ -178,26 +146,9 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         updates["l"] = FieldValue.delete()
         //Remove the relative locations fields from the DocumentReference
         val docRef = this.getRefForDocumentID(documentID)
-        docRef.set(updates, SetOptions.merge()).addOnCompleteListener {
-            if (it.isSuccessful)
-                completionListener?.onComplete(null)
-            else
-                completionListener?.onComplete(it.exception)
-        }
-    }
-
-    /**
-     * Gets the current location for a document and calls the callback with the current value.
-     *
-     * @param documentID The documentID of the document whose location to get
-     * @param callback The Lambda function that is called once the location is retrieved
-     */
-    fun getLocation(documentID: String, callback: (location: GeoPoint?, exception: Exception?)->Unit) {
-        this.getLocation(documentID, object : LocationCallback {
-            override fun onComplete(location: GeoPoint?, exception: Exception?) {
-                callback(location, exception)
-            }
-        })
+        docRef.set(updates, SetOptions.merge())
+                .addOnSuccessListener { completionListener?.onComplete(null) }
+                .addOnFailureListener { completionListener?.onComplete(it) }
     }
 
     /**
@@ -207,17 +158,16 @@ class GeoFirestore(val collectionReference: CollectionReference) {
      * @param callback The callback that is called once the location is retrieved
      */
     fun getLocation(documentID: String, callback: LocationCallback) {
-        this.getRefForDocumentID(documentID).get().addOnCompleteListener {
-            if (it.isSuccessful) {
-                val location = getLocationValue(it.result!!)
-                if (location != null)
-                    callback.onComplete(location, null)
-                else
-                    callback.onComplete(null, NullPointerException("Location doesn't exist"))
-
-            } else
-                callback.onComplete(null, it.exception)
-        }
+        this.getRefForDocumentID(documentID).get()
+                .addOnFailureListener { callback.onComplete(location = null, exception = it) }
+                .addOnSuccessListener { snap ->
+                    getLocationValue(snap).also { geoPoint ->
+                        if (geoPoint == null)
+                            callback.onComplete(location = geoPoint, exception = null)
+                        else
+                            callback.onComplete(location = null, exception = NullPointerException("Location doesn't exist"))
+                    }
+                }
     }
 
     /**
@@ -229,6 +179,16 @@ class GeoFirestore(val collectionReference: CollectionReference) {
      * @return The new GeoQuery object
      */
     fun queryAtLocation(center: GeoPoint, radius: Double) = GeoQuery(this, center, GeoUtils.capRadius(radius))
+
+    /**
+     * Returns a new SingleGeoQuery object centered at a given location and with the given radius.
+     *
+     * @param center The center of the query
+     * @param radius The radius of the query, in kilometers. The maximum radius that is
+     *               supported is about 8587km. If a radius bigger than this is passed we'll cap it.
+     * @return The new SingleGeoQuery object
+     */
+    fun getAtLocation(center: GeoPoint, radius: Double) = SingleGeoQuery(this, center, GeoUtils.capRadius(radius))
 
     /**
      * Raise an event from the EventRaiser

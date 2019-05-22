@@ -18,6 +18,9 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.imperiumlabs.geofirestore.callbacks.EventListenerBridge;
+import org.imperiumlabs.geofirestore.callbacks.GeoQueryDataEventListener;
+import org.imperiumlabs.geofirestore.callbacks.GeoQueryEventListener;
 import org.imperiumlabs.geofirestore.core.GeoHash;
 import org.imperiumlabs.geofirestore.core.GeoHashQuery;
 import org.imperiumlabs.geofirestore.util.GeoUtils;
@@ -29,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
 
+// TODO: 05/05/19 Android Studio show error for javadoc in @throws IllegalArgumentException
 /**
  * A GeoQuery object can be used for geo queries in a given circle. The GeoQuery class is thread safe.
  */
@@ -91,7 +95,7 @@ public class GeoQuery {
     }
 
     private boolean locationIsInQuery(GeoPoint location) {
-        return GeoUtils.Companion.distance(new GeoLocation(location.getLatitude(), location.getLongitude()), new GeoLocation(center.getLatitude(), center.getLongitude())) <= this.radius;
+        return GeoUtils.INSTANCE.distance(new GeoLocation(location.getLatitude(), location.getLongitude()), new GeoLocation(center.getLatitude(), center.getLongitude())) <= this.radius;
     }
 
     private void updateLocationInfo(final DocumentSnapshot documentSnapshot, final GeoPoint location) {
@@ -506,7 +510,7 @@ public class GeoQuery {
      */
     public synchronized void setRadius(double radius) {
         // convert to meters
-        this.radius = GeoUtils.Companion.capRadius(radius) * KILOMETER_TO_METER;
+        this.radius = GeoUtils.INSTANCE.capRadius(radius) * KILOMETER_TO_METER;
         if (this.hasListeners()) {
             this.setupQueries();
         }
@@ -521,7 +525,7 @@ public class GeoQuery {
     public synchronized void setLocation(GeoPoint center, double radius) {
         this.center = center;
         // convert radius to meters
-        this.radius = GeoUtils.Companion.capRadius(radius) * KILOMETER_TO_METER;
+        this.radius = GeoUtils.INSTANCE.capRadius(radius) * KILOMETER_TO_METER;
         if (this.hasListeners()) {
             this.setupQueries();
         }
