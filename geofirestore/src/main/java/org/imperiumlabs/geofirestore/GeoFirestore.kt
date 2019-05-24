@@ -120,8 +120,7 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         //Create a Map with the fields to add
         val updates = HashMap<String, Any>()
         updates["g"] = geoHash.geoHashString
-        // TODO: 13/05/19 change the location from List to GeoPoint to support geofirestore-js
-        updates["l"] = listOf(location.latitude, location.longitude)
+        updates["l"] = location
         //Update the DocumentReference with the location data
         docRef.set(updates, SetOptions.merge())
                 .addOnSuccessListener { completionListener?.onComplete(null) }
