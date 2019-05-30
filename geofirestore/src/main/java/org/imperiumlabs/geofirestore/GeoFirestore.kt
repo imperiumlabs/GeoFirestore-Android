@@ -47,9 +47,9 @@ class GeoFirestore(val collectionReference: CollectionReference) {
     }
 
     /**
-     * A listener that can be used to be notified about a successful write or an error on writing.
+     * A callback that can be used to be notified about a successful write or an error on writing.
      */
-    interface CompletionListener {
+    interface CompletionCallback {
         /**
          * Called once a location was successfully saved on the server or an error occurred. On success, the parameter
          * error will be null; in case of an error, the error will be passed to this method.
@@ -106,12 +106,12 @@ class GeoFirestore(val collectionReference: CollectionReference) {
      *
      * @param documentID The documentID of the document to save the location for
      * @param location The location of this document
-     * @param completionListener A listener that is called once the location was successfully saved on the server
+     * @param completionCallback A listener that is called once the location was successfully saved on the server
      *                           or an error occurred
      */
-    fun setLocation(documentID: String?, location: GeoPoint, completionListener: CompletionListener?) {
+    fun setLocation(documentID: String?, location: GeoPoint, completionCallback: CompletionCallback?) {
         if (documentID == null) {
-            completionListener?.onComplete(NullPointerException("Document ID is null"))
+            completionCallback?.onComplete(NullPointerException("Document ID is null"))
             return
         }
         //Get the DocumentReference for this documentID
@@ -123,8 +123,8 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         updates["l"] = location
         //Update the DocumentReference with the location data
         docRef.set(updates, SetOptions.merge())
-                .addOnSuccessListener { completionListener?.onComplete(null) }
-                .addOnFailureListener { completionListener?.onComplete(it) }
+                .addOnSuccessListener { completionCallback?.onComplete(null) }
+                .addOnFailureListener { completionCallback?.onComplete(it) }
     }
 
     /**
@@ -140,12 +140,12 @@ class GeoFirestore(val collectionReference: CollectionReference) {
      * Removes the location of a document from this GeoFirestore.
      *
      * @param documentID The documentID of the document to remove from this GeoFirestore
-     * @param completionListener A completion listener that is called once the location is successfully removed
+     * @param completionCallback A completion listener that is called once the location is successfully removed
      *                           from the server or an error occurred
      */
-    fun removeLocation(documentID: String?, completionListener: CompletionListener?) {
+    fun removeLocation(documentID: String?, completionCallback: CompletionCallback?) {
         if (documentID == null) {
-            completionListener?.onComplete(NullPointerException("Document ID is null"))
+            completionCallback?.onComplete(NullPointerException("Document ID is null"))
             return
         }
         //Crate a Map with the fields to remove
@@ -155,8 +155,8 @@ class GeoFirestore(val collectionReference: CollectionReference) {
         //Remove the relative locations fields from the DocumentReference
         val docRef = this.getRefForDocumentID(documentID)
         docRef.set(updates, SetOptions.merge())
-                .addOnSuccessListener { completionListener?.onComplete(null) }
-                .addOnFailureListener { completionListener?.onComplete(it) }
+                .addOnSuccessListener { completionCallback?.onComplete(null) }
+                .addOnFailureListener { completionCallback?.onComplete(it) }
     }
 
     /**

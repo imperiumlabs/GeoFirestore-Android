@@ -10,9 +10,7 @@ import com.google.firebase.firestore.GeoPoint
 import kotlinx.android.synthetic.main.activity_main.*
 import org.imperiumlabs.geofirestore.GeoFirestore
 import org.imperiumlabs.geofirestore.callbacks.GeoQueryDataEventListener
-import org.imperiumlabs.geofirestore.callbacks.SingleGeoQueryDataEventListener
-import org.imperiumlabs.geofirestore.extension.getLocation
-import org.imperiumlabs.geofirestore.extension.setLocation
+import org.imperiumlabs.geofirestore.callbacks.SingleGeoQueryDataEventCallback
 
 class MainActivity: AppCompatActivity() {
 
@@ -43,7 +41,7 @@ class MainActivity: AppCompatActivity() {
 
     private fun testSimpleGeoQuery() {
         val singleGeoQuery = geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS)
-        singleGeoQuery.addSingleGeoQueryEventListener(object : SingleGeoQueryDataEventListener {
+        singleGeoQuery.addSingleGeoQueryEventListener(object : SingleGeoQueryDataEventCallback {
             override fun onSuccess(documentSnapshots: List<DocumentSnapshot>) {
                 documentSnapshots.forEach {
                     val desc = it["DESCRIPTION"] as? String

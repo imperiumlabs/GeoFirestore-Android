@@ -31,7 +31,7 @@ fun GeoFirestore.getLocation(documentID: String, callback: (location: GeoPoint?,
  *                           from the server or an error occurred
  */
 fun GeoFirestore.removeLocation(documentID: String?, completionListener: (exception: Exception?)->Unit) {
-    this.removeLocation(documentID, object : GeoFirestore.CompletionListener {
+    this.removeLocation(documentID, object : GeoFirestore.CompletionCallback {
         override fun onComplete(exception: Exception?) {
             completionListener(exception)
         }
@@ -47,7 +47,7 @@ fun GeoFirestore.removeLocation(documentID: String?, completionListener: (except
  *                           or an error occurred
  */
 fun GeoFirestore.setLocation(documentID: String?, location: GeoPoint, completionListener: (exception: Exception?)->Unit) {
-    this.setLocation(documentID, location, object : GeoFirestore.CompletionListener {
+    this.setLocation(documentID, location, object : GeoFirestore.CompletionCallback {
         override fun onComplete(exception: Exception?) {
             completionListener(exception)
         }

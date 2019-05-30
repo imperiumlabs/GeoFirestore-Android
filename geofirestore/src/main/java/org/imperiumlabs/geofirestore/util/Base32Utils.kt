@@ -1,7 +1,7 @@
 package org.imperiumlabs.geofirestore.util
 
-// FULLY TESTED
 
+// FULLY TESTED
 object Base32Utils {
 
     //number of bits per base 32 character
@@ -34,5 +34,8 @@ object Base32Utils {
     /*
      * This method check if a given geo hash is valid
      */
-    fun isValidBase32String(string: String) = string.matches("^[$BASE32_CHARS]*$".toRegex())
+    fun isValidBase32String(string: String) =
+            if (string.isNotEmpty())
+                string.matches("^[$BASE32_CHARS]*$".toRegex())
+            else false
 }

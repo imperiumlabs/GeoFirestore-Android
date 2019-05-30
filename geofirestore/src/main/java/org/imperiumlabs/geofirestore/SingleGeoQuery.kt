@@ -6,7 +6,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
-import org.imperiumlabs.geofirestore.callbacks.SingleGeoQueryDataEventListener
+import org.imperiumlabs.geofirestore.callbacks.SingleGeoQueryDataEventCallback
 import org.imperiumlabs.geofirestore.core.GeoHashQuery
 import org.imperiumlabs.geofirestore.extension.mapNotNullManyTo
 
@@ -25,7 +25,7 @@ class SingleGeoQuery(
     //The setupQuery method has already been called?
     private var mGeoQueryInitialized = false
     //Store all the listeners
-    private val mEventListeners = arrayListOf<SingleGeoQueryDataEventListener>()
+    private val mEventListeners = arrayListOf<SingleGeoQueryDataEventCallback>()
     //Store the data previously sent in order to notify immediately
     private val mOldData = arrayListOf<DocumentSnapshot>()
 
@@ -98,11 +98,11 @@ class SingleGeoQuery(
     /**
      * Add a SingleGeoQueryDataEventListener
      */
-    fun addSingleGeoQueryEventListener(listener: SingleGeoQueryDataEventListener) {
-        if (mEventListeners.contains(listener))
+    fun addSingleGeoQueryEventListener(callback: SingleGeoQueryDataEventCallback) {
+        if (mEventListeners.contains(callback))
             throw IllegalArgumentException("Added the same listener twice to a SingleGeoQuery!")
         //Add the listener to the others
-        mEventListeners.add(listener)
+        mEventListeners.add(callback)
         //Check if there are some data previously crated
         if (mOldData.isNotEmpty())
             mEventListeners.forEach { it.onSuccess(mOldData) }
@@ -114,10 +114,10 @@ class SingleGeoQuery(
     /**
      * Remove a SingleGeoQueryDataEventListener
      */
-    fun removeSingleGeoQueryEventListener(listener: SingleGeoQueryDataEventListener) {
-        if (!mEventListeners.contains(listener))
+    fun removeSingleGeoQueryEventListener(callback: SingleGeoQueryDataEventCallback) {
+        if (!mEventListeners.contains(callback))
             throw IllegalArgumentException("Trying to remove listener that was removed or not added!")
-        mEventListeners.remove(listener)
+        mEventListeners.remove(callback)
         //If there are no more listeners we reset the query
         if (mEventListeners.isEmpty())
             reset()

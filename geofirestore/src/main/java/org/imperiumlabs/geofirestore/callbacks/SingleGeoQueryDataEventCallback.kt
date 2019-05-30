@@ -5,7 +5,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 /**
  * SingleGeoQuery notify the listeners with this interface about the success or failure of the query.
  */
-interface SingleGeoQueryDataEventListener {
+interface SingleGeoQueryDataEventCallback {
 
     /**
      * Called if SingleGeoQuery has successfully obtained some data.

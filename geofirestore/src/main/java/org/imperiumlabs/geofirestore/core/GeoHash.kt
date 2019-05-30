@@ -54,7 +54,7 @@ class GeoHash {
 
     //Constructor with hash string
     constructor(hash: String) {
-        if (hash.isEmpty() || !Base32Utils.isValidBase32String(hash))
+        if (!Base32Utils.isValidBase32String(hash))
             throw IllegalArgumentException("Not a valid geoHashString: $hash")
         this.geoHashString = hash
     }
