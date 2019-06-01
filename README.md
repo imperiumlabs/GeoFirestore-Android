@@ -1,5 +1,8 @@
 # GeoFirestore for Android — Realtime location queries with Firestore
 
+[![](https://jitpack.io/v/imperiumlabs/GeoFirestore-Android.svg)](https://jitpack.io/#imperiumlabs/GeoFirestore-Android)
+
+
 GeoFirestore is an open-source library for Android that allows you to store and query a set of documents based on their geographic location.
 
 At its heart, GeoFirestore simply stores locations with string keys. Its main benefit however, is the possibility of querying documents within a given geographic area - all in realtime.
@@ -22,8 +25,29 @@ Assume you are building an app to rate bars, and you store all information for a
 
 In order to use GeoFirestore in your project, you need to [add the Firestore Android
 SDK](https://firebase.google.com/docs/firestore/quickstart). After that you can include GeoFirestore in your project.
+### Enable Jitpack
+Add it in your root build.gradle at the end of repositories:
+```gradle
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+Using **Gradle**
 
-Follow [these instructions](https://jitpack.io/#imperiumlabs/GeoFirestore-Android/v1.1.1) to add GeoFirestore using gradle, maven, sbt, and leiningen. 
+```gradle
+implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.4.0'
+```
+**Using Maven**
+```xml
+<dependency>
+    <groupId>com.github.imperiumlabs</groupId>
+    <artifactId>GeoFirestore-Android</artifactId>
+    <version>v1.4.0</version>
+</dependency>
+```
 
 ## Getting Started with Firestore
 
@@ -35,8 +59,8 @@ GeoFirestore requires the Firestore database in order to store location data. Yo
 A `GeoFirestore` object is used to read and write geo location data to your Firestore database and to create queries. To create a new `GeoFirestore` instance you need to attach it to a Firestore collection reference:
 
 ```kotlin
-val geoFirestoreRef = FirebaseFirestore.getInstance().collection("my-collection")
-val geoFirestore = GeoFirestore(geoFirestoreRef)
+val collectionRef = FirebaseFirestore.getInstance().collection("my-collection")
+val geoFirestore = GeoFirestore(collectionRef)
 ```
 
 #### Setting location data
@@ -63,7 +87,7 @@ Retrieving locations happens with callbacks. If the document is not present in G
 ```kotlin
 geoFirestore.getLocation("que8B9fxxjcvbC81h32VRjeBSUW2") { location, exception ->
     if (exception == null && location != null){
-        Log.d(TAG, String.format("The location for this document is [%f,%f]", location.getLatitude()location.getLongitude()));
+        Log.d(TAG, "The location for this document is $location")
     }
 });
 ```
@@ -108,31 +132,27 @@ fired. This includes key exited events for documents that no longer match the qu
 
 To listen for events you must add a `GeoQueryEventListener` to the `GeoQuery`:
 
-```java
-geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
-    @Override
-    public void onKeyEntered(String documentID, GeoPoint location) {
-        System.out.println(String.format("Document %s entered the search area at [%f,%f]", documentID, location.getLatitude(), location.getLongitude()));
+```kotlin
+geoQuery.addGeoQueryEventListener(object : GeoQueryEventListener {
+    
+    override fun onKeyEntered(documentID: String, location: GeoPoint) {
+        Log.d(TAG, "Document $documentID entered the search area at $location")
     }
 
-    @Override
-    public void onKeyExited(String documentID) {
-        System.out.println(String.format("Document %s is no longer in the search area", documentID));
+    override fun onKeyExited(documentID: String) {
+        Log.d(TAG, "Document $documentID is no longer in the search area")
     }
 
-    @Override
-    public void onKeyMoved(String documentID, GeoPoint location) {
-        System.out.println(String.format("Document %s moved within the search area to [%f,%f]", documentID, location.getLatitude(), location.getLongitude()));
+    override fun onKeyMoved(documentID: String, location: GeoPoint) {
+        Log.d(TAG, "Document $documentID moved within the search area to $location")
     }
 
-    @Override
-    public void onGeoQueryReady() {
-        System.out.println("All initial data has been loaded and events have been fired!");
+    override fun onGeoQueryReady() {
+        Log.d(TAG, "All initial data has been loaded and events have been fired!")
     }
 
-    @Override
-    public void onGeoQueryError(Exception exception) {
-        System.err.println("There was an error with this query: " + exception.getLocalizedMessage());
+    override fun onGeoQueryError(exception: Exception) {
+        Log.d(TAG, "There was an error with this query: $exception")
     }
 });
 ```
@@ -156,39 +176,32 @@ one additional event type:
 
 Adding a data event listener is similar to adding a key event listener:
 
-```java
-geoQuery.addGeoQueryDataEventListener(new GeoQueryDataEventListener() {
-    @Override
-    public void onDocumentEntered(DocumentSnapshot documentSnapshot, GeoPoint location) {
+```kotlin
+geoQuery.addGeoQueryDataEventListener(object : GeoQueryDataEventListener {
+    override fun onDocumentEntered(documentSnapshot: DocumentSnapshot, location: GeoPoint) {
         // ...
     }
 
-    @Override
-    public void onDocumentExited(DocumentSnapshot documentSnapshot) {
+    override fun onDocumentExited(documentSnapshot: DocumentSnapshot) {
         // ...
     }
 
-    @Override
-    public void onDocumentMoved(DocumentSnapshot documentSnapshot, GeoPoint location) { 
+    override fun onDocumentMoved(documentSnapshot: DocumentSnapshot, location: GeoPoint) {
         // ...
     }
 
-    @Override
-    public void onDocumentChanged(DocumentSnapshot documentSnapshot, GeoPoint location) {
+    override fun onDocumentChanged(documentSnapshot: DocumentSnapshot, location: GeoPoint) {
         // ...
     }
 
-    @Override
-    public void onGeoQueryReady() {
+    override fun onGeoQueryReady() {
         // ...
     }
 
-    @Override
-    public void onGeoQueryError(Exception exception) {
+    override fun onGeoQueryError(exception: Exception) {
         // ...
     }
-});
-
+})
 ```
 
 #### Updating the query criteria
@@ -201,12 +214,16 @@ fired; however, key moved events might occur independently.
 Updating the search area can be helpful in cases such as when you need to update
 the query to the new visible map area after a user scrolls.
 
-## API Reference & Documentation
+## Apps using GeoFirestore
+There's hundreds of apps using GeoFirestore. Feel free to contact us or submit a pull request to add yours to this list.
 
-Full API reference and documentation is available [here](https://imperiumlabs.github.io/GeoFirestore-Android/)
+* [Petify](https://play.google.com/store/apps/details?id=com.supercaly.petify)
+
+## Changelog
+[See the changelog](CHANGELOG.md) to be aware of latest improvements and fixes.
 
 ## License
 
-GeoFirestore is available under the MIT license. See the LICENSE file for more info.
+GeoFirestore is available under the MIT license. [See the LICENSE file](LICENSE) for more info.
 
 Copyright (c) 2018 Imperium Labs
