@@ -1,7 +1,11 @@
 package org.imperiumlabs.geofirestore
 
+import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.*
 import org.imperiumlabs.geofirestore.core.GeoHash
+import org.imperiumlabs.geofirestore.core.GeoHashQuery
+import org.imperiumlabs.geofirestore.extension.mapNotNullManyTo
 import org.imperiumlabs.geofirestore.util.GeoUtils
 import java.util.logging.Logger
 
@@ -60,7 +64,7 @@ class GeoFirestore(val collectionReference: CollectionReference) {
     }
 
     /**
-     * A callback that can be used to retrieve a location or an error in retrieving a location.
+     * A callback that can be used to retrieve a location or an error.
      */
     interface LocationCallback {
         /**
@@ -71,6 +75,21 @@ class GeoFirestore(val collectionReference: CollectionReference) {
          * @param exception The exception or null if no exception occurred
          */
         fun onComplete(location: GeoPoint?, exception: Exception?)
+    }
+
+    /**
+     * A callback that can be used to retrieve the documents or an error.
+     */
+    interface SingleGeoQueryDataEventCallback {
+
+        /**
+         * Called once some data is obtained from a query. On success, the parameter
+         * error will be null; in case of an error, the error will be passed to this.
+         *
+         * @param documentSnapshots List of snapshots associated with the obtained documents.
+         * @param exception The exception or null if no exception occurred
+         */
+        fun onComplete(documentSnapshots: List<DocumentSnapshot>?, exception: Exception?)
     }
 
     //Instance of the EventRaiser
@@ -196,7 +215,32 @@ class GeoFirestore(val collectionReference: CollectionReference) {
      *               supported is about 8587km. If a radius bigger than this is passed we'll cap it.
      * @return The new SingleGeoQuery object
      */
-    fun getAtLocation(center: GeoPoint, radius: Double) = SingleGeoQuery(this, center, GeoUtils.capRadius(radius))
+    fun getAtLocation(center: GeoPoint, radius: Double, callback: SingleGeoQueryDataEventCallback) {
+        //Get the resultTasks from Firebase Queries generated from GeoHashQueries
+        val resultTasks = arrayListOf<Task<QuerySnapshot>>().apply {
+            GeoHashQuery.queriesAtLocation(GeoLocation(center.latitude, center.longitude), radius)
+                    .forEach {
+                        this.add(this@GeoFirestore.collectionReference
+                                .orderBy("g")
+                                .startAt(it.startValue)
+                                .endAt(it.endValue)
+                                .get())
+                    }
+        }
+        //Await the completion of all the resultTasks
+        Tasks.whenAllComplete(resultTasks)
+                .addOnFailureListener { e ->
+                    //Some error occurred, notify it to the listeners
+                    GeoFirestore.LOGGER.warning("Failed retrieving data for geo query")
+                    callback.onComplete(null, e)
+                }
+                .addOnSuccessListener { tasks ->
+                    //Data retrieved, extract it from the tasks and pass it to the listeners
+                    val documentSnapshots = arrayListOf<DocumentSnapshot>()
+                    tasks.mapNotNullManyTo(documentSnapshots) { (it.result as? QuerySnapshot)?.documents }
+                    callback.onComplete(documentSnapshots, null)
+                }
+    }
 
     /**
      * Raise an event from the EventRaiser

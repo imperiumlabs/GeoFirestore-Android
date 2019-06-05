@@ -9,8 +9,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import kotlinx.android.synthetic.main.activity_main.*
 import org.imperiumlabs.geofirestore.GeoFirestore
-import org.imperiumlabs.geofirestore.callbacks.GeoQueryDataEventListener
-import org.imperiumlabs.geofirestore.callbacks.SingleGeoQueryDataEventCallback
+import org.imperiumlabs.geofirestore.listeners.GeoQueryDataEventListener
+import org.imperiumlabs.geofirestore.extension.getAtLocation
 
 class MainActivity: AppCompatActivity() {
 
@@ -36,25 +36,23 @@ class MainActivity: AppCompatActivity() {
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, postList)
         post_list_view.adapter = adapter
 
-        testSingleGeoQuery()
+        testSimpleGeoQuery()
     }
 
-    private fun testSingleGeoQuery() {
-        val singleGeoQuery = geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS)
-        singleGeoQuery.addSingleGeoQueryEventListener(object : SingleGeoQueryDataEventCallback {
-            override fun onSuccess(documentSnapshots: List<DocumentSnapshot>) {
-                documentSnapshots.forEach {
+    private fun testSimpleGeoQuery() {
+        geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS) { p0, p1 ->
+            if (p1 != null) {
+                Log.e(TAG, "onError: ", p1)
+                return@getAtLocation
+            } else {
+                p0?.forEach {
                     val desc = it["DESCRIPTION"] as? String
                     Log.i(TAG, "onSuccess: $desc")
                     adapter.insert(desc, adapter.count)
                     adapter.notifyDataSetChanged()
                 }
             }
-
-            override fun onError(exception: Exception) {
-                Log.e(TAG, "onError: ", exception)
-            }
-        })
+        }
     }
 
     private fun testGeoQuery() {

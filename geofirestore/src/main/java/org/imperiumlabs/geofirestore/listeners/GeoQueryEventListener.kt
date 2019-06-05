@@ -1,4 +1,4 @@
-package org.imperiumlabs.geofirestore.callbacks
+package org.imperiumlabs.geofirestore.listeners
 
 import com.google.firebase.firestore.GeoPoint
 

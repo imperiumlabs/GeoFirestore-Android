@@ -1,5 +1,6 @@
 package org.imperiumlabs.geofirestore.extension
 
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.GeoPoint
 import org.imperiumlabs.geofirestore.GeoFirestore
 
@@ -50,6 +51,22 @@ fun GeoFirestore.setLocation(documentID: String?, location: GeoPoint, completion
     this.setLocation(documentID, location, object : GeoFirestore.CompletionCallback {
         override fun onComplete(exception: Exception?) {
             completionListener(exception)
+        }
+    })
+}
+
+/**
+ * Returns a new SingleGeoQuery object centered at a given location and with the given radius.
+ *
+ * @param center The center of the query
+ * @param radius The radius of the query, in kilometers. The maximum radius that is
+ *               supported is about 8587km. If a radius bigger than this is passed we'll cap it.
+ * @return The new SingleGeoQuery object
+ */
+fun GeoFirestore.getAtLocation(center: GeoPoint, radius: Double, callback: (p0: List<DocumentSnapshot>?, p1: Exception?)->Unit) {
+    this.getAtLocation(center, radius, object : GeoFirestore.SingleGeoQueryDataEventCallback {
+        override fun onComplete(documentSnapshots: List<DocumentSnapshot>?, exception: Exception?) {
+            callback(documentSnapshots, exception)
         }
     })
 }

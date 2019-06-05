@@ -18,9 +18,9 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import org.imperiumlabs.geofirestore.callbacks.EventListenerBridge;
-import org.imperiumlabs.geofirestore.callbacks.GeoQueryDataEventListener;
-import org.imperiumlabs.geofirestore.callbacks.GeoQueryEventListener;
+import org.imperiumlabs.geofirestore.listeners.EventListenerBridge;
+import org.imperiumlabs.geofirestore.listeners.GeoQueryDataEventListener;
+import org.imperiumlabs.geofirestore.listeners.GeoQueryEventListener;
 import org.imperiumlabs.geofirestore.core.GeoHash;
 import org.imperiumlabs.geofirestore.core.GeoHashQuery;
 import org.imperiumlabs.geofirestore.util.GeoUtils;
