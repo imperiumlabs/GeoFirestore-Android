@@ -1,5 +1,8 @@
 # GeoFirestore for Android — Realtime location queries with Firestore
 
+[![](https://jitpack.io/v/imperiumlabs/GeoFirestore-Android.svg)](https://jitpack.io/#imperiumlabs/GeoFirestore-Android)
+
+
 GeoFirestore is an open-source library for Android that allows you to store and query a set of documents based on their geographic location.
 
 At its heart, GeoFirestore simply stores locations with string keys. Its main benefit however, is the possibility of querying documents within a given geographic area - all in realtime.
@@ -20,10 +23,32 @@ Assume you are building an app to rate bars, and you store all information for a
 
 ## Including GeoFirestore in your Android project
 
-In order to use GeoFirestore in your project, you need to [add the Firestore Android
-SDK](https://firebase.google.com/docs/firestore/quickstart). After that you can include GeoFirestore in your project.
+In order to use GeoFirestore in your project, you need to [add the Firestore Android SDK](https://firebase.google.com/docs/firestore/quickstart). 
+After that you can include GeoFirestore in your project.
 
-Follow [these instructions](https://jitpack.io/#imperiumlabs/GeoFirestore-Android/v1.1.1) to add GeoFirestore using gradle, maven, sbt, and leiningen. 
+### Enable Jitpack
+Add it in your root build.gradle at the end of repositories:
+```gradle
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+Using **Gradle**
+
+```gradle
+implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.5.0'
+```
+Using **Maven**
+```xml
+<dependency>
+    <groupId>com.github.imperiumlabs</groupId>
+    <artifactId>GeoFirestore-Android</artifactId>
+    <version>v1.5.0</version>
+</dependency>
+```
 
 ## Getting Started with Firestore
 
@@ -34,62 +59,49 @@ GeoFirestore requires the Firestore database in order to store location data. Yo
 
 A `GeoFirestore` object is used to read and write geo location data to your Firestore database and to create queries. To create a new `GeoFirestore` instance you need to attach it to a Firestore collection reference:
 
-```java
-CollectionReference geoFirestoreRef = FirebaseFirestore.getInstance().collection("my-collection");
-GeoFirestore geoFirestore = new GeoFirestore(geoFirestoreRef);
+```kotlin
+val collectionRef = FirebaseFirestore.getInstance().collection("my-collection")
+val geoFirestore = GeoFirestore(collectionRef)
 ```
 
 #### Setting location data
 
 To set the location of a document simply call the `setLocation` method:
 
-```java
-geoFirestore.setLocation("que8B9fxxjcvbC81h32VRjeBSUW2", new GeoPoint(37.7853889, -122.4056973));
-```
-
-To check if a write was successfully saved on the server, you can add a
-`GeoFirestore.CompletionListener` to the `setLocation` call:
-
-```java
-geoFirestore.setLocation("que8B9fxxjcvbC81h32VRjeBSUW2", new GeoPoint(37.7853889, -122.4056973), new GeoFirestore.CompletionListener() {
-    @Override
-    public void onComplete(Exception exception) {
-        if (exception == null){
-            System.out.println("Location saved on server successfully!");
-        }
-    }
-});
+```kotlin
+geoFirestore.setLocation("que8B9fxxjcvbC81h32VRjeBSUW2", GeoPoint(37.7853889, -122.4056973)) { exception ->
+    if (exception != null)
+        Log.d(TAG, "Location saved on server successfully!")
+}
 ```
 
 To remove a location and delete the location from your database simply call:
 
-```java
-geoFirestore.removeLocation("que8B9fxxjcvbC81h32VRjeBSUW2");
+```kotlin
+geoFirestore.removeLocation("que8B9fxxjcvbC81h32VRjeBSUW2")
 ```
 
 #### Retrieving a location
 
 Retrieving locations happens with callbacks. If the document is not present in GeoFirestore, the callback will be called with `null`. If an error occurred, the callback is passed the error and the location will be `null`.
 
-```java
-geoFirestore.getLocation("que8B9fxxjcvbC81h32VRjeBSUW2", new GeoFirestore.LocationCallback() {
-    @Override
-    public void onComplete(GeoPoint location, Exception exception) {
-        if (exception == null && location != null){
-            System.out.println(String.format("The location for this document is [%f,%f]", location.getLatitude(), location.getLongitude()));
-        }
+```kotlin
+geoFirestore.getLocation("que8B9fxxjcvbC81h32VRjeBSUW2") { location, exception ->
+    if (exception == null && location != null){
+        Log.d(TAG, "The location for this document is $location")
     }
-});
+};
 ```
 
 ### Geo Queries
 
 GeoFirestore allows you to query all documents within a geographic area using `GeoQuery`
-objects. As the locations for documents change, the query is updated in realtime and fires events letting you know if any relevant documents have moved. `GeoQuery` parameters can be updated later to change the size and center of the queried area.
+objects. As the locations for documents change, the query is updated in realtime and fires events letting you know if any relevant documents have moved. 
+`GeoQuery` parameters can be updated later to change the size and center of the queried area.
 
-```java
+```kotlin
 // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
-GeoQuery geoQuery = geoFirestore.queryAtLocation(new GeoPoint(37.7832, -122.4056), 0.6);
+val geoQuery = geoFirestore.queryAtLocation(GeoPoint(37.7832, -122.4056), 0.6)
 ```
 
 #### Receiving events for geo queries
@@ -122,31 +134,27 @@ fired. This includes key exited events for documents that no longer match the qu
 
 To listen for events you must add a `GeoQueryEventListener` to the `GeoQuery`:
 
-```java
-geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
-    @Override
-    public void onKeyEntered(String documentID, GeoPoint location) {
-        System.out.println(String.format("Document %s entered the search area at [%f,%f]", documentID, location.getLatitude(), location.getLongitude()));
+```kotlin
+geoQuery.addGeoQueryEventListener(object : GeoQueryEventListener {
+    
+    override fun onKeyEntered(documentID: String, location: GeoPoint) {
+        Log.d(TAG, "Document $documentID entered the search area at $location")
     }
 
-    @Override
-    public void onKeyExited(String documentID) {
-        System.out.println(String.format("Document %s is no longer in the search area", documentID));
+    override fun onKeyExited(documentID: String) {
+        Log.d(TAG, "Document $documentID is no longer in the search area")
     }
 
-    @Override
-    public void onKeyMoved(String documentID, GeoPoint location) {
-        System.out.println(String.format("Document %s moved within the search area to [%f,%f]", documentID, location.getLatitude(), location.getLongitude()));
+    override fun onKeyMoved(documentID: String, location: GeoPoint) {
+        Log.d(TAG, "Document $documentID moved within the search area to $location")
     }
 
-    @Override
-    public void onGeoQueryReady() {
-        System.out.println("All initial data has been loaded and events have been fired!");
+    override fun onGeoQueryReady() {
+        Log.d(TAG, "All initial data has been loaded and events have been fired!")
     }
 
-    @Override
-    public void onGeoQueryError(Exception exception) {
-        System.err.println("There was an error with this query: " + exception.getLocalizedMessage());
+    override fun onGeoQueryError(exception: Exception) {
+        Log.d(TAG, "There was an error with this query: $exception")
     }
 });
 ```
@@ -170,57 +178,71 @@ one additional event type:
 
 Adding a data event listener is similar to adding a key event listener:
 
-```java
-geoQuery.addGeoQueryDataEventListener(new GeoQueryDataEventListener() {
-    @Override
-    public void onDocumentEntered(DocumentSnapshot documentSnapshot, GeoPoint location) {
+```kotlin
+geoQuery.addGeoQueryDataEventListener(object : GeoQueryDataEventListener {
+    override fun onDocumentEntered(documentSnapshot: DocumentSnapshot, location: GeoPoint) {
         // ...
     }
 
-    @Override
-    public void onDocumentExited(DocumentSnapshot documentSnapshot) {
+    override fun onDocumentExited(documentSnapshot: DocumentSnapshot) {
         // ...
     }
 
-    @Override
-    public void onDocumentMoved(DocumentSnapshot documentSnapshot, GeoPoint location) { 
+    override fun onDocumentMoved(documentSnapshot: DocumentSnapshot, location: GeoPoint) {
         // ...
     }
 
-    @Override
-    public void onDocumentChanged(DocumentSnapshot documentSnapshot, GeoPoint location) {
+    override fun onDocumentChanged(documentSnapshot: DocumentSnapshot, location: GeoPoint) {
         // ...
     }
 
-    @Override
-    public void onGeoQueryReady() {
+    override fun onGeoQueryReady() {
         // ...
     }
 
-    @Override
-    public void onGeoQueryError(Exception exception) {
+    override fun onGeoQueryError(exception: Exception) {
         // ...
     }
-});
+})
+```
+#### Query the location "one-shot"
 
+Sometimes it's useful to have the possibility to search for all the documents present in a geographical area without, however, listening to data variations; 
+to do so simply call:
+
+```kotlin
+geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS) { docs, ex ->
+    if (ex != null) {
+        Log.e(TAG, "onError: ", ex)
+        return@getAtLocation
+    } else {
+        // ...
+    }
+}
 ```
 
+This will return to the `SingleGeoQueryDataEventCallback` a list of all the documents presents in the area and an exception if something goes wrong.
+  
 #### Updating the query criteria
 
 The `GeoQuery` search area can be changed with `setCenter` and `setRadius`. Key
-exited and key entered events will be fired for documemts moving in and out of
+exited and key entered events will be fired for documents moving in and out of
 the old and new search area, respectively. No key moved events will be
 fired; however, key moved events might occur independently.
 
 Updating the search area can be helpful in cases such as when you need to update
 the query to the new visible map area after a user scrolls.
 
-## API Reference & Documentation
+## Apps using GeoFirestore
+There's hundreds of apps using GeoFirestore. Feel free to contact us or submit a pull request to add yours to this list.
 
-Full API reference and documentation is available [here](https://imperiumlabs.github.io/GeoFirestore-Android/)
+* [Petify](https://play.google.com/store/apps/details?id=com.supercaly.petify)
+
+## Changelog
+[See the changelog](CHANGELOG.md) to be aware of latest improvements and fixes.
 
 ## License
 
-GeoFirestore is available under the MIT license. See the LICENSE file for more info.
+GeoFirestore is available under the MIT license. [See the LICENSE file](LICENSE) for more info.
 
 Copyright (c) 2018 Imperium Labs
