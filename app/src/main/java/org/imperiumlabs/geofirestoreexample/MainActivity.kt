@@ -36,10 +36,10 @@ class MainActivity: AppCompatActivity() {
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, postList)
         post_list_view.adapter = adapter
 
-        testSimpleGeoQuery()
+        testSingleGeoQuery()
     }
 
-    private fun testSimpleGeoQuery() {
+    private fun testSingleGeoQuery() {
         geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS) { p0, p1 ->
             if (p1 != null) {
                 Log.e(TAG, "onError: ", p1)

@@ -8,27 +8,31 @@ All notable changes to this project will be documented in this file.
 - Some Unit Test class
 
 ### Changed
-- The SingleGeoQuery is a method in the GeoFirestore class
 - Converted the GeoQuery class to Kotlin
 - GeoQuery constructor work with a radius in km and without the need to cap-it
 - GeoLocation constructor accept a GeoPoint 
 - Updated some external dependency
 
 ### Removed
-- SingleGeoQuery
-- SingleGeoQueryDataEventCallback
 - Ability to  get the Firestore query(s) from the GeoQuery
 
 ## [v1.5.0] - 2019-06-24
 ### Added
 - Ability to parse document with "g" as List or GeoPoint
 - Added this CHANGELOG.md
+- method getAtLocation to GeoFirestore replacing the SingleGeoQuery class
+- SingleGeoQueryDataEventCallback to GeoFirestore
 
 ### Changed
 - Reorganized the entire project structure
 - Type of the "g" parameter from List<Doube> to GeoPoint
+- The SingleGeoQuery is a method in the GeoFirestore class
 - Updated the README.md with the newest features
-- Refactor the "SingleGeoQueryDataEventListener" to "SingleGeoQueryDataEventCallback"
+- Changed package "callbacks" to "listeners"
+
+### Removed
+- SingleGeoQuery class
+- SingleGeoQueryDataEventCallback 
 
 ## [v1.4.0] - 2019-05-22
 ### Added

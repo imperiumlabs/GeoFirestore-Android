@@ -211,24 +211,18 @@ Sometimes it's useful to have the possibility to search for all the documents pr
 to do so simply call:
 
 ```kotlin
-val singleGeoQuery = geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS)
-singleGeoQuery.addSingleGeoQueryEventListener(object : SingleGeoQueryDataEventCallback {
-    override fun onSuccess(documentSnapshots: List<DocumentSnapshot>) {
-        documentSnapshots.forEach {
-            val desc = it["DESCRIPTION"] as? String
-            Log.i(TAG, "onSuccess: $desc")
-            adapter.insert(desc, adapter.count)
-            adapter.notifyDataSetChanged()
-        }
+geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS) { docs, ex ->
+    if (ex != null) {
+        Log.e(TAG, "onError: ", ex)
+        return@getAtLocation
+    } else {
+        // ...
     }
-
-    override fun onError(exception: Exception) {
-        Log.e(TAG, "onError: ", exception)
-    }
-})
+}
 ```
 
-This will return to the listeners a list of all the documents presents in the area  
+This will return to the `SingleGeoQueryDataEventCallback` a list of all the documents presents in the area and an exception if something goes wrong.
+  
 #### Updating the query criteria
 
 The `GeoQuery` search area can be changed with `setCenter` and `setRadius`. Key
