@@ -23,8 +23,9 @@ Assume you are building an app to rate bars, and you store all information for a
 
 ## Including GeoFirestore in your Android project
 
-In order to use GeoFirestore in your project, you need to [add the Firestore Android
-SDK](https://firebase.google.com/docs/firestore/quickstart). After that you can include GeoFirestore in your project.
+In order to use GeoFirestore in your project, you need to [add the Firestore Android SDK](https://firebase.google.com/docs/firestore/quickstart). 
+After that you can include GeoFirestore in your project.
+
 ### Enable Jitpack
 Add it in your root build.gradle at the end of repositories:
 ```gradle
@@ -38,14 +39,14 @@ allprojects {
 Using **Gradle**
 
 ```gradle
-implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.4.0'
+implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.5.0'
 ```
-**Using Maven**
+Using **Maven**
 ```xml
 <dependency>
     <groupId>com.github.imperiumlabs</groupId>
     <artifactId>GeoFirestore-Android</artifactId>
-    <version>v1.4.0</version>
+    <version>v1.5.0</version>
 </dependency>
 ```
 
@@ -69,7 +70,7 @@ To set the location of a document simply call the `setLocation` method:
 
 ```kotlin
 geoFirestore.setLocation("que8B9fxxjcvbC81h32VRjeBSUW2", GeoPoint(37.7853889, -122.4056973)) { exception ->
-    if (exception == null)
+    if (exception != null)
         Log.d(TAG, "Location saved on server successfully!")
 }
 ```
@@ -89,13 +90,14 @@ geoFirestore.getLocation("que8B9fxxjcvbC81h32VRjeBSUW2") { location, exception -
     if (exception == null && location != null){
         Log.d(TAG, "The location for this document is $location")
     }
-});
+};
 ```
 
 ### Geo Queries
 
 GeoFirestore allows you to query all documents within a geographic area using `GeoQuery`
-objects. As the locations for documents change, the query is updated in realtime and fires events letting you know if any relevant documents have moved. `GeoQuery` parameters can be updated later to change the size and center of the queried area.
+objects. As the locations for documents change, the query is updated in realtime and fires events letting you know if any relevant documents have moved. 
+`GeoQuery` parameters can be updated later to change the size and center of the queried area.
 
 ```kotlin
 // creates a new query around [37.7832, -122.4056] with a radius of 0.6 kilometers
@@ -203,11 +205,34 @@ geoQuery.addGeoQueryDataEventListener(object : GeoQueryDataEventListener {
     }
 })
 ```
+#### Query the location "one-shot"
 
+Sometimes it's useful to have the possibility to search for all the documents present in a geographical area without, however, listening to data variations; 
+to do so simply call:
+
+```kotlin
+val singleGeoQuery = geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS)
+singleGeoQuery.addSingleGeoQueryEventListener(object : SingleGeoQueryDataEventCallback {
+    override fun onSuccess(documentSnapshots: List<DocumentSnapshot>) {
+        documentSnapshots.forEach {
+            val desc = it["DESCRIPTION"] as? String
+            Log.i(TAG, "onSuccess: $desc")
+            adapter.insert(desc, adapter.count)
+            adapter.notifyDataSetChanged()
+        }
+    }
+
+    override fun onError(exception: Exception) {
+        Log.e(TAG, "onError: ", exception)
+    }
+})
+```
+
+This will return to the listeners a list of all the documents presents in the area  
 #### Updating the query criteria
 
 The `GeoQuery` search area can be changed with `setCenter` and `setRadius`. Key
-exited and key entered events will be fired for documemts moving in and out of
+exited and key entered events will be fired for documents moving in and out of
 the old and new search area, respectively. No key moved events will be
 fired; however, key moved events might occur independently.
 

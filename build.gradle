@@ -3,9 +3,9 @@
 buildscript {
 
     //Versions of Kotlin and Firebase
-    ext.kotlin_version = '1.3.31'
-    ext.firebase_core_version = '16.0.9'
-    ext.firebase_firestore_version = '19.0.2'
+    ext.kotlin_version = '1.3.40'
+    ext.firebase_core_version = '17.0.0'
+    ext.firebase_firestore_version = '20.1.0'
 
     repositories {
         google()

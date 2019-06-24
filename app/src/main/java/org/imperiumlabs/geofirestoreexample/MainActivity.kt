@@ -36,10 +36,10 @@ class MainActivity: AppCompatActivity() {
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, postList)
         post_list_view.adapter = adapter
 
-        testSimpleGeoQuery()
+        testSingleGeoQuery()
     }
 
-    private fun testSimpleGeoQuery() {
+    private fun testSingleGeoQuery() {
         val singleGeoQuery = geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS)
         singleGeoQuery.addSingleGeoQueryEventListener(object : SingleGeoQueryDataEventCallback {
             override fun onSuccess(documentSnapshots: List<DocumentSnapshot>) {

@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
 - SingleGeoQueryDataEventCallback
 - Ability to  get the Firestore query(s) from the GeoQuery
 
-## [Unreleased] -
+## [v1.5.0] - 2019-06-24
 ### Added
 - Ability to parse document with "g" as List or GeoPoint
 - Added this CHANGELOG.md
