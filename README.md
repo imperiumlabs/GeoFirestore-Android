@@ -70,8 +70,12 @@ To set the location of a document simply call the `setLocation` method:
 
 ```kotlin
 geoFirestore.setLocation("que8B9fxxjcvbC81h32VRjeBSUW2", GeoPoint(37.7853889, -122.4056973)) { exception ->
-    if (exception != null)
+    if (exception == null)
         Log.d(TAG, "Location saved on server successfully!")
+	}
+	else{
+    	Log.d(TAG, "An error has occurred: $exception")	
+	}
 }
 ```
 
@@ -173,7 +177,7 @@ These "data event" listeners have all of the same events as the key listeners wi
 one additional event type:
 
   6. **Document Changed**: the underlying `DocumentSnapshot` has changed. 
-  
+
   Every document moved event is followed by a document changed event but you can also get change events without a move if the document changed does not affect the location.
 
 Adding a data event listener is similar to adding a key event listener:
@@ -222,7 +226,7 @@ geoFirestore.getAtLocation(QUERY_CENTER, QUERY_RADIUS) { docs, ex ->
 ```
 
 This will return to the `SingleGeoQueryDataEventCallback` a list of all the documents presents in the area and an exception if something goes wrong.
-  
+
 #### Updating the query criteria
 
 The `GeoQuery` search area can be changed with `setCenter` and `setRadius`. Key
