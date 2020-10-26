@@ -189,7 +189,7 @@ class GeoFirestore(val collectionReference: CollectionReference) {
                 .addOnFailureListener { callback.onComplete(location = null, exception = it) }
                 .addOnSuccessListener { snap ->
                     getLocationValue(snap).also { geoPoint ->
-                        if (geoPoint == null)
+                        if (geoPoint != null)
                             callback.onComplete(location = geoPoint, exception = null)
                         else
                             callback.onComplete(location = null, exception = NullPointerException("Location doesn't exist"))
